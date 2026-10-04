@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>債券賽車 忠孝東路到101</title>
+<style>
+  :root{--navy:#0b2545;--gold:#e8c468;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;touch-action:none;}
+  gmp-map-3d{position:fixed;inset:0;width:100%;height:100%;}
+  #hud{position:fixed;inset:0;pointer-events:none;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7);}
+  #topbar{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;gap:8px;}
+  .pill{background:rgba(11,37,69,.78);border:1px solid rgba(232,196,104,.5);border-radius:12px;padding:6px 12px;font-size:14px;}
+  .pill b{color:var(--gold);font-size:18px;}
+  #progress{position:absolute;top:62px;left:14px;right:14px;height:28px;}
+  #progress .track{position:absolute;left:0;right:0;top:12px;height:4px;background:rgba(255,255,255,.35);border-radius:2px;}
+  #progress .st{position:absolute;top:0;transform:translateX(-50%);text-align:center;font-size:10px;white-space:nowrap;}
+  #progress .st i{display:block;width:10px;height:10px;border-radius:50%;background:#fff;margin:7px auto 2px;}
+  #progress .car{position:absolute;top:4px;transform:translateX(-50%);font-size:18px;}
+  #toast{position:absolute;top:120px;left:50%;transform:translateX(-50%);background:rgba(11,37,69,.85);border:2px solid var(--gold);border-radius:10px;padding:8px 18px;font-size:18px;opacity:0;transition:opacity .3s;white-space:nowrap;}
+  #flash{position:absolute;inset:0;background:rgba(255,80,0,.35);opacity:0;transition:opacity .15s;}
+  #hood{position:absolute;left:0;right:0;bottom:0;height:18vh;background:linear-gradient(180deg,#1b1f29,#0d1016);clip-path:polygon(0 100%,100% 100%,100% 55%,62% 0,38% 0,0 55%);}
+  #hood:after{content:"";position:absolute;left:38%;right:38%;top:8%;height:6px;border-radius:3px;background:#e8c468;opacity:.8;}
+  #controls{position:fixed;bottom:0;left:0;right:0;height:34vh;display:none;}
+  #controls div{position:absolute;bottom:3vh;color:rgba(255,255,255,.75);font-size:14px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.3);border-radius:14px;padding:14px 0;text-align:center;user-select:none;-webkit-user-select:none;}
+  #tL{left:12px;width:26vw;} #tR{right:12px;width:26vw;} #tB{left:50%;transform:translateX(-50%);width:28vw;color:#ffb3b3;}
+  .screen{position:fixed;inset:0;background:radial-gradient(ellipse at top,#163a6b,#0b2545 60%,#06162b);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;overflow:auto;z-index:5;}
+  .screen h1{font-size:30px;color:var(--gold);margin-bottom:6px;}
+  .screen h2{font-size:20px;color:var(--gold);margin-bottom:14px;}
+  .screen p{font-size:15px;line-height:1.7;max-width:420px;color:#dbe4f0;}
+  .btn{margin-top:18px;background:var(--gold);color:var(--navy);border:0;border-radius:12px;padding:14px 36px;font-size:18px;font-weight:700;cursor:pointer;}
+  .btn.ghost{background:transparent;color:var(--gold);border:2px solid var(--gold);}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:440px;margin-top:14px;}
+  .opt{background:rgba(255,255,255,.08);border:2px solid rgba(232,196,104,.5);border-radius:12px;padding:16px 10px;font-size:18px;cursor:pointer;}
+  .opt.ok{background:#1e8a4c;border-color:#5fe08f;} .opt.bad{background:#9b2b2b;border-color:#ff8b8b;}
+  .qnum{font-size:13px;color:#9fb3cc;margin-bottom:6px;} .qkey{font-size:26px;font-weight:700;margin-bottom:4px;}
+  table{border-collapse:collapse;margin-top:12px;width:100%;max-width:440px;font-size:14px;}
+  td,th{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.15);text-align:left;} th{color:var(--gold);}
+  input{font-size:17px;padding:10px 14px;border-radius:10px;border:2px solid var(--gold);background:rgba(255,255,255,.08);color:#fff;width:220px;text-align:center;}
+  .hidden{display:none !important;} .score{font-size:44px;color:var(--gold);font-weight:800;margin:6px 0;}
+  #err{color:#ffb3b3;font-size:13px;margin-top:10px;max-width:420px;}
+  /* 掛在大樓旁的債券資訊板（Popover 內容） */
+  .board{background:#0b2545;border:4px solid #e8c468;border-radius:10px;padding:10px 18px;color:#fff;text-align:center;min-width:220px;}
+  .board small{display:block;color:#e8c468;font-size:15px;margin-bottom:4px;}
+  .board strong{font-size:34px;line-height:1.1;}
+</style>
+</head>
+<body>
+
+<div id="hud">
+  <div id="topbar">
+    <div class="pill">時速 <b id="spd">0</b> km/h</div>
+    <div class="pill">⏱ <b id="time">0.0</b> s</div>
+    <div class="pill">資訊板 <b id="boards">0</b>/<span id="boardsTotal">6</span></div>
+  </div>
+  <div id="progress"><div class="track"></div><div class="car" id="carMark">🚗</div></div>
+  <div id="toast"></div><div id="flash"></div><div id="hood"></div>
+</div>
+<div id="controls"><div id="tL">◀ 左車道</div><div id="tB">🛑 煞車</div><div id="tR">右車道 ▶</div></div>
+
+<div id="startScreen" class="screen">
+  <h1>債券賽車</h1>
+  <h2>忠孝東路 → 台北 101（Google 真實 3D）</h2>
+  <p>車子會沿著真實路線前進，沿路大樓旁掛著 <b>6 塊債券資訊板</b>，看清楚再開！抵達 101 後要回答剛剛看到的條件。<br><br>
+  電腦：← → 換車道，↓ 或空白鍵煞車（自動油門）<br>手機：左右按鈕換車道，中間煞車<br>撞到 🚧 會大減速並扣分。</p>
+  <button class="btn" id="startBtn" disabled>地圖載入中…</button>
+  <div id="err"></div>
+</div>
+
+<div id="quizScreen" class="screen hidden">
+  <div class="qnum" id="qnum"></div><div class="qkey" id="qkey"></div>
+  <p>剛剛資訊板上寫的是？</p><div class="opts" id="opts"></div>
+</div>
+
+<div id="resultScreen" class="screen hidden">
+  <h2>🏁 抵達台北 101</h2>
+  <div class="score" id="finalScore"></div><p id="resultDetail"></p>
+  <div id="nameBox"><input id="playerName" maxlength="12" placeholder="輸入名字上榜"><br><button class="btn" id="saveBtn">登錄排行榜</button></div>
+  <table id="lb"></table>
+  <button class="btn ghost" id="againBtn">再跑一次</button>
+</div>
+
+<script>
+/* =========================================================
+   ★ 設定區：只需改這裡 ★
+   ========================================================= */
+const GOOGLE_MAPS_API_KEY = '請把你的金鑰貼在這裡';   // ← 貼上 Google Maps API 金鑰
+
+// 債券條件：value = 正確答案（顯示在路邊資訊板），options = 三個錯誤選項
+// 以下為範例數據，上線前請依實際商品條件修改
+const BOND = {
+  facts: [
+    { key: '發行人',   value: 'NVIDIA 輝達', options: ['Apple 蘋果', 'Microsoft 微軟', 'Amazon 亞馬遜'] },
+    { key: '票面利率', value: '3.50%',       options: ['4.25%', '2.75%', '5.00%'] },
+    { key: '到期日',   value: '2031/06/15',  options: ['2029/06/15', '2031/12/15', '2034/06/15'] },
+    { key: '申購價',   value: '97.80',       options: ['99.50', '101.20', '95.30'] },
+    { key: '信用評等', value: 'AA-',         options: ['A+', 'AAA', 'BBB+'] },
+    { key: '配息頻率', value: '半年配',      options: ['季配', '年配', '月配'] },
+  ]
+};
+
+// 真實路線：忠孝東路（忠孝復興 → 市府路口）→ 市府路南下 → 台北101
+// 若鏡頭偏離馬路，微調這裡的經緯度即可（可在 Google 地圖按右鍵取得座標）
+const ROUTE = [
+  { name: '忠孝復興',   lat: 25.04175, lng: 121.54370 },
+  { name: '忠孝敦化',   lat: 25.04158, lng: 121.55120 },
+  { name: '國父紀念館', lat: 25.04135, lng: 121.55760 },
+  { name: '市府路口',   lat: 25.04118, lng: 121.56400 },
+  { name: '台北101',    lat: 25.03400, lng: 121.56400 },
+];
+
+const CAM = { tilt: 78, range: 32, altitude: 12, lookAhead: 22 };  // 鏡頭：俯角、距離、高度(公尺)、往前看幾公尺
+const MAX_SPEED = 20;        // 公尺/秒（約 72 km/h）
+const LANE_OFFSET = 4;       // 左右車道偏移（公尺）
+const BOARD_SIDE_OFFSET = 16; // 資訊板離路中線幾公尺
+const BOARD_HEIGHT = 20;      // 資訊板離地高度（公尺）
+const OBSTACLE_COUNT = 10;
+const LB_KEY = 'bondrace3d_lb';
+
+/* ---------------- 幾何工具 ---------------- */
+const R = 6371000, D2R = Math.PI / 180;
+const lat0 = ROUTE[0].lat;
+function toXY(p) { return { x: (p.lng - ROUTE[0].lng) * D2R * R * Math.cos(lat0 * D2R), y: (p.lat - lat0) * D2R * R }; }
+function toLL(x, y) { return { lat: lat0 + y / R / D2R, lng: ROUTE[0].lng + x / (R * Math.cos(lat0 * D2R)) / D2R }; }
+const pts = ROUTE.map(toXY);
+const segLen = [], cum = [0];
+for (let i = 0; i < pts.length - 1; i++) {
+  const l = Math.hypot(pts[i + 1].x - pts[i].x, pts[i + 1].y - pts[i].y); segLen.push(l); cum.push(cum[i] + l);
+}
+const TOTAL = cum[cum.length - 1];
+// 距離 s（公尺）→ 位置、方向（heading 度，0=北、順時針）
+function at(s) {
+  s = Math.max(0, Math.min(TOTAL, s));
+  let i = 0; while (i < segLen.length - 1 && s > cum[i + 1]) i++;
+  const t = (s - cum[i]) / segLen[i], a = pts[i], b = pts[i + 1];
+  const dx = b.x - a.x, dy = b.y - a.y, len = segLen[i];
+  return { x: a.x + dx * t, y: a.y + dy * t, nx: dx / len, ny: dy / len, heading: (Math.atan2(dx, dy) / D2R + 360) % 360 };
+}
+function offsetLL(p, lateral) {   // lateral >0 = 行進方向右側
+  return toLL(p.x + p.ny * lateral, p.y - p.nx * lateral);
+}
+
+/* ---------------- 載入 Google 3D 地圖 ---------------- */
+(g => { var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window; b = b[c] || (b[c] = {}); var d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams, u = () => h || (h = new Promise(async (f, n) => { await (a = m.createElement("script")); e.set("libraries", [...r] + ""); for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]); e.set("callback", c + ".maps." + q); a.src = `https://maps.${c}apis.com/maps/api/js?` + e; d[q] = f; a.onerror = () => h = n(Error(p + " could not load.")); a.nonce = m.querySelector("script[nonce]")?.nonce || ""; m.head.append(a) })); d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n)) })({ key: GOOGLE_MAPS_API_KEY, v: "weekly", language: "zh-TW", region: "TW" });
+
+let map, boards = [], obstacles = [], stationMarks = [];
+let s = 0, lane = 0, laneTarget = 0, speed = 0, startTime = 0, elapsed = 0, state = 'start';
+let boardsSeen = 0, coneHits = 0;
+const keys = {}; let touchSteer = 0, touchBrake = false;
+
+async function init() {
+  try {
+    const lib = await google.maps.importLibrary('maps3d');
+    const { Map3DElement, Marker3DElement, Marker3DInteractiveElement, PopoverElement } = lib;
+    const { PinElement } = await google.maps.importLibrary('marker');
+    const p0 = at(CAM.lookAhead), c0 = offsetLL(p0, 0);
+    map = new Map3DElement({
+      center: { lat: c0.lat, lng: c0.lng, altitude: CAM.altitude },
+      heading: p0.heading, tilt: CAM.tilt, range: CAM.range, mode: 'SATELLITE',
+    });
+    try { map.defaultUIHidden = true; } catch (e) {}
+    try { map.defaultUIDisabled = true; } catch (e) {}
+    try { map.gestureHandling = 'none'; } catch (e) {}
+    document.body.prepend(map);
+
+    // 債券資訊板：掛在路邊大樓旁
+    const n = BOND.facts.length;
+    BOND.facts.forEach((f, i) => {
+      const dist = TOTAL * (i + 1) / (n + 1);
+      const side = i % 2 === 0 ? -1 : 1;
+      const ll = offsetLL(at(dist), side * BOARD_SIDE_OFFSET);
+      const pos = { lat: ll.lat, lng: ll.lng, altitude: BOARD_HEIGHT };
+      let placed = false;
+      if (PopoverElement && Marker3DInteractiveElement) {
+        try {
+          const mk = new Marker3DInteractiveElement({ position: pos, altitudeMode: 'RELATIVE_TO_GROUND', extruded: true });
+          const pin = new PinElement({ background: '#e8c468', borderColor: '#0b2545', glyphText: String(i + 1), glyphColor: '#0b2545', scale: 1.4 });
+          mk.append(pin);
+          const pop = new PopoverElement({ open: true, positionAnchor: mk });
+          const div = document.createElement('div'); div.className = 'board';
+          div.innerHTML = `<small>資訊板 ${i + 1} ｜ ${f.key}</small><strong>${f.value}</strong>`;
+          pop.append(div);
+          map.append(mk); map.append(pop); placed = true;
+        } catch (e) { console.warn('Popover 不可用，改用標籤', e); }
+      }
+      if (!placed) {
+        const mk = new Marker3DElement({ position: pos, altitudeMode: 'RELATIVE_TO_GROUND', extruded: true, label: `資訊板${i + 1} ${f.key}：${f.value}` });
+        const pin = new PinElement({ background: '#e8c468', borderColor: '#0b2545', glyphText: String(i + 1), glyphColor: '#0b2545', scale: 1.6 });
+        mk.append(pin); map.append(mk);
+      }
+      boards.push({ dist, seen: false });
+    });
+
+    // 障礙物 🚧（資訊板附近不放）
+    for (let i = 0; i < OBSTACLE_COUNT; i++) {
+      const dist = 120 + Math.random() * (TOTAL - 240);
+      if (boards.some(b => Math.abs(b.dist - dist) < 60)) continue;
+      const ln = Math.random() < 0.5 ? -1 : 1;
+      const ll = offsetLL(at(dist), ln * LANE_OFFSET);
+      const mk = new Marker3DElement({ position: { lat: ll.lat, lng: ll.lng, altitude: 2 }, altitudeMode: 'RELATIVE_TO_GROUND' });
+      const pin = new PinElement({ background: '#ff6a00', borderColor: '#000', glyphText: '🚧', scale: 1.3 });
+      mk.append(pin); map.append(mk);
+      obstacles.push({ dist, lane: ln, mk, hit: false });
+    }
+
+    // 站點進度
+    const prog = document.getElementById('progress');
+    ROUTE.forEach((r, i) => {
+      const t = cum[i] / TOTAL;
+      const el = document.createElement('div'); el.className = 'st'; el.style.left = (t * 100) + '%';
+      el.innerHTML = `<i></i>${r.name}`; prog.appendChild(el);
+      stationMarks.push({ dist: cum[i], name: r.name, hit: i === 0 });
+    });
+    document.getElementById('boardsTotal').textContent = n;
+
+    const btn = document.getElementById('startBtn'); btn.disabled = false; btn.textContent = '🏁 出發';
+    requestAnimationFrame(loop);
+  } catch (e) {
+    document.getElementById('err').textContent = '地圖載入失敗：' + e.message + '（請確認金鑰正確、已啟用 Maps JavaScript API 與 Map Tiles API）';
+    console.error(e);
+  }
+}
+
+/* ---------------- 遊戲迴圈 ---------------- */
+let last = 0;
+function loop(ts) {
+  requestAnimationFrame(loop);
+  const dt = Math.min((ts - last) / 1000 || 0, 0.05); last = ts;
+  if (state !== 'play') return;
+
+  const brake = keys.ArrowDown || keys.KeyS || keys.Space || touchBrake;
+  speed += (brake ? -16 : 7) * dt;
+  speed = Math.max(0, Math.min(MAX_SPEED, speed));
+  let input = touchSteer;
+  if (keys.ArrowLeft || keys.KeyA) input = -1;
+  if (keys.ArrowRight || keys.KeyD) input = 1;
+  if (input) laneTarget = input;
+  lane += (laneTarget - lane) * Math.min(1, 5 * dt);
+  s += speed * dt;
+  elapsed = (performance.now() - startTime) / 1000;
+
+  for (const o of obstacles) {
+    if (!o.hit && Math.abs(o.dist - s) < 3 && Math.abs(o.lane - lane) < 0.6) {
+      o.hit = true; o.mk.remove(); coneHits++; speed *= 0.3;
+      const f = document.getElementById('flash'); f.style.opacity = 1; setTimeout(() => f.style.opacity = 0, 150);
+    }
+  }
+  for (const b of boards) if (!b.seen && s > b.dist) { b.seen = true; boardsSeen++; document.getElementById('boards').textContent = boardsSeen; }
+  for (const st of stationMarks) if (!st.hit && s > st.dist) { st.hit = true; toast('經過 ' + st.name); }
+
+  // 鏡頭：看車前方 lookAhead 公尺處，heading 沿路線
+  const pa = at(Math.min(TOTAL, s + CAM.lookAhead));
+  const ll = offsetLL(pa, lane * LANE_OFFSET);
+  map.center = { lat: ll.lat, lng: ll.lng, altitude: CAM.altitude };
+  map.heading = pa.heading;
+
+  document.getElementById('spd').textContent = Math.round(speed * 3.6);
+  document.getElementById('time').textContent = elapsed.toFixed(1);
+  document.getElementById('carMark').style.left = Math.min(100, s / TOTAL * 100) + '%';
+  if (s >= TOTAL - 5) finishRace();
+}
+function toast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.style.opacity = 1;
+  clearTimeout(t._h); t._h = setTimeout(() => t.style.opacity = 0, 1500);
+}
+
+/* ---------------- 流程 ---------------- */
+function startRace() {
+  s = 0; lane = 0; laneTarget = 0; speed = 0; boardsSeen = 0; coneHits = 0; elapsed = 0;
+  boards.forEach(b => b.seen = false); stationMarks.forEach((st, i) => st.hit = i === 0);
+  obstacles.forEach(o => { if (o.hit) { o.hit = false; map.append(o.mk); } });
+  document.getElementById('boards').textContent = 0;
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('resultScreen').classList.add('hidden');
+  startTime = performance.now(); state = 'play';
+}
+let qIndex = 0, correct = 0, raceTime = 0;
+function finishRace() {
+  state = 'quiz'; raceTime = elapsed; qIndex = 0; correct = 0;
+  document.getElementById('quizScreen').classList.remove('hidden'); showQuestion();
+}
+function showQuestion() {
+  const f = BOND.facts[qIndex];
+  document.getElementById('qnum').textContent = `第 ${qIndex + 1} / ${BOND.facts.length} 題 ・ 跑完時間 ${raceTime.toFixed(1)} 秒`;
+  document.getElementById('qkey').textContent = f.key;
+  const opts = [f.value, ...f.options].sort(() => Math.random() - 0.5);
+  const box = document.getElementById('opts'); box.innerHTML = ''; let answered = false;
+  opts.forEach(o => {
+    const b = document.createElement('div'); b.className = 'opt'; b.textContent = o;
+    b.onclick = () => {
+      if (answered) return; answered = true;
+      if (o === f.value) { b.classList.add('ok'); correct++; }
+      else { b.classList.add('bad'); [...box.children].find(x => x.textContent === f.value).classList.add('ok'); }
+      setTimeout(() => { qIndex++; qIndex < BOND.facts.length ? showQuestion() : showResult(); }, 900);
+    };
+    box.appendChild(b);
+  });
+}
+function calcScore() { return Math.max(0, Math.round(correct * 1000 - raceTime * 10 - coneHits * 200)); }
+function showResult() {
+  state = 'result';
+  document.getElementById('quizScreen').classList.add('hidden');
+  document.getElementById('resultScreen').classList.remove('hidden');
+  document.getElementById('finalScore').textContent = calcScore() + ' 分';
+  document.getElementById('resultDetail').innerHTML =
+    `答對 <b>${correct}/${BOND.facts.length}</b> 題（每題 +1000）<br>時間 ${raceTime.toFixed(1)} 秒（每秒 −10）<br>撞 🚧 ${coneHits} 次（每次 −200）`;
+  document.getElementById('nameBox').classList.remove('hidden'); renderLB();
+}
+function loadLB() { try { return JSON.parse(localStorage.getItem(LB_KEY)) || []; } catch (e) { return []; } }
+function renderLB() {
+  const lb = loadLB().sort((a, b) => b.score - a.score).slice(0, 10);
+  document.getElementById('lb').innerHTML = '<tr><th>#</th><th>名字</th><th>分數</th><th>答對</th><th>秒</th></tr>' +
+    lb.map((r, i) => `<tr><td>${i + 1}</td><td>${r.name}</td><td>${r.score}</td><td>${r.correct}</td><td>${r.time}</td></tr>`).join('');
+}
+document.getElementById('saveBtn').onclick = () => {
+  const name = document.getElementById('playerName').value.trim() || '匿名';
+  const lb = loadLB(); lb.push({ name, score: calcScore(), correct, time: raceTime.toFixed(1) });
+  try { localStorage.setItem(LB_KEY, JSON.stringify(lb)); } catch (e) {}
+  document.getElementById('nameBox').classList.add('hidden'); renderLB();
+};
+document.getElementById('startBtn').onclick = startRace;
+document.getElementById('againBtn').onclick = startRace;
+
+/* ---------------- 操控 ---------------- */
+addEventListener('keydown', e => { keys[e.code] = true; if (e.code === 'Space') e.preventDefault(); });
+addEventListener('keyup', e => { keys[e.code] = false; });
+if ('ontouchstart' in window) {
+  document.getElementById('controls').style.display = 'block';
+  const bind = (id, on, off) => {
+    const el = document.getElementById(id);
+    el.addEventListener('touchstart', e => { e.preventDefault(); on(); }, { passive: false });
+    el.addEventListener('touchend', e => { e.preventDefault(); off(); }, { passive: false });
+    el.addEventListener('touchcancel', off);
+  };
+  bind('tL', () => touchSteer = -1, () => touchSteer = 0);
+  bind('tR', () => touchSteer = 1, () => touchSteer = 0);
+  bind('tB', () => touchBrake = true, () => touchBrake = false);
+}
+init();
+</script>
+</body>
+</html>
