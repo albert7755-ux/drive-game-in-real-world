@@ -105,7 +105,14 @@ out geom;"""
     return {"b": buildings, "r": roads}
 
 
-html = Path(__file__).parent.joinpath("bond_race_city.html").read_text(encoding="utf-8")
+# 找遊戲檔：檔名只要包含 bond_race_city、放在 repo 任何資料夾都找得到
+here = Path(__file__).parent
+found = sorted(here.rglob("*bond_race_city*.html"))
+if not found:
+    st.error("找不到遊戲檔 bond_race_city.html，請確認它已上傳到這個 GitHub repo。")
+    st.write("目前 repo 裡的檔案：", [str(p.relative_to(here)) for p in here.rglob("*") if p.is_file() and ".git" not in p.parts])
+    st.stop()
+html = found[0].read_text(encoding="utf-8")
 try:
     data = load_osm()
 except Exception:
