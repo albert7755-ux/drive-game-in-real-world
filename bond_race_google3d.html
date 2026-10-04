@@ -110,7 +110,9 @@ const ROUTE = [
   { name: '台北101',    lat: 25.03400, lng: 121.56400 },
 ];
 
-const CAM = { tilt: 78, range: 32, altitude: 12, lookAhead: 22 };  // 鏡頭：俯角、距離、高度(公尺)、往前看幾公尺
+// 鏡頭：tilt 俯角（90=平視）、range 鏡頭離注視點幾公尺、altitude 注視點海拔（公尺）、lookAhead 往前看幾公尺
+// 畫面太高就把 range 調小；鏡頭鑽進地面或大樓就把 altitude 調大
+const CAM = { tilt: 75, range: 90, altitude: 45, lookAhead: 40 };
 const MAX_SPEED = 20;        // 公尺/秒（約 72 km/h）
 const LANE_OFFSET = 4;       // 左右車道偏移（公尺）
 const BOARD_SIDE_OFFSET = 16; // 資訊板離路中線幾公尺
@@ -160,9 +162,12 @@ async function init() {
       heading: p0.heading, tilt: CAM.tilt, range: CAM.range, mode: 'SATELLITE',
     });
     try { map.defaultUIHidden = true; } catch (e) {}
-    try { map.defaultUIDisabled = true; } catch (e) {}
     try { map.gestureHandling = 'none'; } catch (e) {}
     document.body.prepend(map);
+    placeCamera();
+    // 地圖初始化完成後再強制拉一次鏡頭，避免被預設的遠景蓋掉
+    map.addEventListener('gmp-steadychange', () => { if (state !== 'play') placeCamera(); });
+    setTimeout(placeCamera, 1500);
 
     // 債券資訊板：掛在路邊大樓旁
     const n = BOND.facts.length;
@@ -249,16 +254,22 @@ function loop(ts) {
   for (const b of boards) if (!b.seen && s > b.dist) { b.seen = true; boardsSeen++; document.getElementById('boards').textContent = boardsSeen; }
   for (const st of stationMarks) if (!st.hit && s > st.dist) { st.hit = true; toast('經過 ' + st.name); }
 
-  // 鏡頭：看車前方 lookAhead 公尺處，heading 沿路線
-  const pa = at(Math.min(TOTAL, s + CAM.lookAhead));
-  const ll = offsetLL(pa, lane * LANE_OFFSET);
-  map.center = { lat: ll.lat, lng: ll.lng, altitude: CAM.altitude };
-  map.heading = pa.heading;
+  placeCamera();
 
   document.getElementById('spd').textContent = Math.round(speed * 3.6);
   document.getElementById('time').textContent = elapsed.toFixed(1);
   document.getElementById('carMark').style.left = Math.min(100, s / TOTAL * 100) + '%';
   if (s >= TOTAL - 5) finishRace();
+}
+// 鏡頭：看車前方 lookAhead 公尺處，heading 沿路線；每次都把 tilt、range 一起設定
+function placeCamera() {
+  if (!map) return;
+  const pa = at(Math.min(TOTAL, s + CAM.lookAhead));
+  const ll = offsetLL(pa, lane * LANE_OFFSET);
+  map.center = { lat: ll.lat, lng: ll.lng, altitude: CAM.altitude };
+  map.heading = pa.heading;
+  map.tilt = CAM.tilt;
+  map.range = CAM.range;
 }
 function toast(msg) {
   const t = document.getElementById('toast'); t.textContent = msg; t.style.opacity = 1;
@@ -273,6 +284,7 @@ function startRace() {
   document.getElementById('boards').textContent = 0;
   document.getElementById('startScreen').classList.add('hidden');
   document.getElementById('resultScreen').classList.add('hidden');
+  placeCamera();
   startTime = performance.now(); state = 'play';
 }
 let qIndex = 0, correct = 0, raceTime = 0;
