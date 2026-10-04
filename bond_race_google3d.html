@@ -7,39 +7,29 @@
 <style>
   :root{--navy:#0b2545;--gold:#e8c468;}
   *{box-sizing:border-box;margin:0;padding:0;}
-  html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;}
-  canvas#gl{display:block;position:fixed;inset:0;}
-  #hud{position:fixed;inset:0;pointer-events:none;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);}
-  #topbar{position:absolute;top:10px;left:10px;display:flex;gap:8px;flex-wrap:wrap;max-width:calc(100% - 200px);}
-  .pill{background:rgba(11,37,69,.8);border:1px solid rgba(232,196,104,.55);border-radius:12px;padding:6px 12px;font-size:14px;white-space:nowrap;}
+  html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;touch-action:none;}
+  gmp-map-3d{position:fixed;inset:0;width:100%;height:100%;}
+  #hud{position:fixed;inset:0;pointer-events:none;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7);}
+  #topbar{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;gap:8px;}
+  .pill{background:rgba(11,37,69,.78);border:1px solid rgba(232,196,104,.5);border-radius:12px;padding:6px 12px;font-size:14px;}
   .pill b{color:var(--gold);font-size:18px;}
-  #minimap{position:absolute;top:10px;right:10px;width:170px;height:170px;border-radius:14px;border:2px solid rgba(232,196,104,.6);background:rgba(11,37,69,.75);}
-  #guide{position:absolute;top:70px;left:50%;transform:translateX(-50%);background:rgba(20,110,60,.92);border:2px solid #fff;border-radius:12px;padding:8px 20px;font-size:22px;font-weight:700;display:none;white-space:nowrap;}
-  #toast{position:absolute;top:130px;left:50%;transform:translateX(-50%);background:rgba(11,37,69,.88);border:2px solid var(--gold);border-radius:10px;padding:8px 18px;font-size:19px;opacity:0;transition:opacity .3s;white-space:nowrap;}
-  #flash{position:absolute;inset:0;background:rgba(255,40,0,.38);opacity:0;transition:opacity .2s;}
-  #count{position:absolute;top:38%;left:50%;transform:translate(-50%,-50%);font-size:110px;font-weight:900;color:var(--gold);text-shadow:0 4px 18px rgba(0,0,0,.8);display:none;}
-  /* 駕駛座 */
-  #dash{position:absolute;left:0;right:0;bottom:0;height:26vh;min-height:150px;}
-  #dash .panel{position:absolute;left:0;right:0;bottom:0;height:100%;background:linear-gradient(180deg,#22252c 0%,#0e1014 70%);clip-path:polygon(0 30%,18% 12%,50% 0,82% 12%,100% 30%,100% 100%,0 100%);}
-  #dash .glare{position:absolute;left:18%;right:18%;top:2%;height:3px;background:linear-gradient(90deg,transparent,rgba(232,196,104,.7),transparent);}
-  #wheel{position:absolute;left:50%;bottom:-18%;width:min(46vh,62vw);height:min(46vh,62vw);transform:translateX(-50%);transform-origin:50% 50%;}
-  #speedo{position:absolute;left:calc(50% + min(26vh,34vw));bottom:22%;width:118px;height:118px;border-radius:50%;background:radial-gradient(circle,#111 60%,#2a2e36);border:3px solid #444;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-  #speedo b{font-size:36px;color:#fff;line-height:1;} #speedo span{font-size:12px;color:#aab;} #gear{font-size:16px;color:var(--gold);font-weight:800;}
-  #dist{position:absolute;right:calc(50% + min(26vh,34vw));bottom:30%;font-size:15px;background:rgba(0,0,0,.55);border:1px solid #555;border-radius:10px;padding:8px 12px;text-align:center;}
-  #dist b{display:block;font-size:24px;color:var(--gold);}
-  #controls{position:fixed;inset:0;display:none;pointer-events:none;}
-  #controls div{position:absolute;bottom:4vh;width:19vw;max-width:110px;height:19vw;max-height:110px;border-radius:50%;background:rgba(0,0,0,.42);border:2px solid rgba(255,255,255,.45);color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;pointer-events:auto;}
-  #cL{left:3vw;} #cR{left:calc(6vw + min(19vw,110px));}
-  #cB{right:calc(6vw + min(19vw,110px));color:#ffb3b3!important;} #cG{right:3vw;color:#a8ffb8!important;}
-  #controls div.on{background:rgba(232,196,104,.55);}
+  #progress{position:absolute;top:62px;left:14px;right:14px;height:28px;}
+  #progress .track{position:absolute;left:0;right:0;top:12px;height:4px;background:rgba(255,255,255,.35);border-radius:2px;}
+  #progress .st{position:absolute;top:0;transform:translateX(-50%);text-align:center;font-size:10px;white-space:nowrap;}
+  #progress .st i{display:block;width:10px;height:10px;border-radius:50%;background:#fff;margin:7px auto 2px;}
+  #progress .car{position:absolute;top:4px;transform:translateX(-50%);font-size:18px;}
+  #toast{position:absolute;top:120px;left:50%;transform:translateX(-50%);background:rgba(11,37,69,.85);border:2px solid var(--gold);border-radius:10px;padding:8px 18px;font-size:18px;opacity:0;transition:opacity .3s;white-space:nowrap;}
+  #flash{position:absolute;inset:0;background:rgba(255,80,0,.35);opacity:0;transition:opacity .15s;}
+  #hood{position:absolute;left:0;right:0;bottom:0;height:18vh;background:linear-gradient(180deg,#1b1f29,#0d1016);clip-path:polygon(0 100%,100% 100%,100% 55%,62% 0,38% 0,0 55%);}
+  #hood:after{content:"";position:absolute;left:38%;right:38%;top:8%;height:6px;border-radius:3px;background:#e8c468;opacity:.8;}
+  #controls{position:fixed;bottom:0;left:0;right:0;height:34vh;display:none;}
+  #controls div{position:absolute;bottom:3vh;color:rgba(255,255,255,.75);font-size:14px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.3);border-radius:14px;padding:14px 0;text-align:center;user-select:none;-webkit-user-select:none;}
+  #tL{left:12px;width:26vw;} #tR{right:12px;width:26vw;} #tB{left:50%;transform:translateX(-50%);width:28vw;color:#ffb3b3;}
   .screen{position:fixed;inset:0;background:radial-gradient(ellipse at top,#163a6b,#0b2545 60%,#06162b);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;overflow:auto;z-index:5;}
-  .screen h1{font-size:32px;color:var(--gold);margin-bottom:6px;}
+  .screen h1{font-size:30px;color:var(--gold);margin-bottom:6px;}
   .screen h2{font-size:20px;color:var(--gold);margin-bottom:14px;}
-  .screen p{font-size:15px;line-height:1.75;max-width:440px;color:#dbe4f0;}
-  .keys{display:grid;grid-template-columns:auto auto;gap:4px 14px;text-align:left;margin:12px auto 0;font-size:14px;color:#dbe4f0;}
-  .keys kbd{display:inline-block;min-width:26px;padding:2px 6px;border:1px solid var(--gold);border-radius:6px;color:var(--gold);text-align:center;margin-right:2px;}
+  .screen p{font-size:15px;line-height:1.7;max-width:420px;color:#dbe4f0;}
   .btn{margin-top:18px;background:var(--gold);color:var(--navy);border:0;border-radius:12px;padding:14px 36px;font-size:18px;font-weight:700;cursor:pointer;}
-  .btn:disabled{opacity:.5;cursor:default;}
   .btn.ghost{background:transparent;color:var(--gold);border:2px solid var(--gold);}
   .opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:440px;margin-top:14px;}
   .opt{background:rgba(255,255,255,.08);border:2px solid rgba(232,196,104,.5);border-radius:12px;padding:16px 10px;font-size:18px;cursor:pointer;}
@@ -49,53 +39,33 @@
   td,th{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.15);text-align:left;} th{color:var(--gold);}
   input{font-size:17px;padding:10px 14px;border-radius:10px;border:2px solid var(--gold);background:rgba(255,255,255,.08);color:#fff;width:220px;text-align:center;}
   .hidden{display:none !important;} .score{font-size:44px;color:var(--gold);font-weight:800;margin:6px 0;}
-  #loadMsg{font-size:13px;color:#9fb3cc;margin-top:10px;}
+  #err{color:#ffb3b3;font-size:13px;margin-top:10px;max-width:420px;}
+  /* 掛在大樓旁的債券資訊板（Popover 內容） */
+  .board{background:#0b2545;border:4px solid #e8c468;border-radius:10px;padding:10px 18px;color:#fff;text-align:center;min-width:220px;}
+  .board small{display:block;color:#e8c468;font-size:15px;margin-bottom:4px;}
+  .board strong{font-size:34px;line-height:1.1;}
 </style>
 </head>
 <body>
-<canvas id="gl"></canvas>
 
 <div id="hud">
   <div id="topbar">
+    <div class="pill">時速 <b id="spd">0</b> km/h</div>
     <div class="pill">⏱ <b id="time">0.0</b> s</div>
     <div class="pill">資訊板 <b id="boards">0</b>/<span id="boardsTotal">6</span></div>
-    <div class="pill">碰撞 <b id="crashes">0</b></div>
   </div>
-  <canvas id="minimap" width="170" height="170"></canvas>
-  <div id="guide"></div>
-  <div id="toast"></div>
-  <div id="flash"></div>
-  <div id="count"></div>
-  <div id="dash">
-    <div class="panel"></div><div class="glare"></div>
-    <div id="dist">距離 101<b id="distV">0.0</b>km</div>
-    <svg id="wheel" viewBox="-100 -100 200 200">
-      <circle r="88" fill="none" stroke="#15171c" stroke-width="20"/>
-      <circle r="88" fill="none" stroke="#2c3038" stroke-width="12"/>
-      <path d="M-84 6 L-30 14 L-22 40 L22 40 L30 14 L84 6" fill="none" stroke="#1d2027" stroke-width="18" stroke-linejoin="round"/>
-      <circle r="26" fill="#1d2027" stroke="#3a3f49" stroke-width="3"/>
-      <text y="7" text-anchor="middle" font-size="16" font-weight="800" fill="#e8c468">BOND</text>
-      <rect x="-5" y="-98" width="10" height="16" rx="3" fill="#e8c468"/>
-    </svg>
-    <div id="speedo"><b id="spd">0</b><span>km/h</span><div id="gear">D</div></div>
-  </div>
+  <div id="progress"><div class="track"></div><div class="car" id="carMark">🚗</div></div>
+  <div id="toast"></div><div id="flash"></div><div id="hood"></div>
 </div>
-<div id="controls"><div id="cL">◀</div><div id="cR">▶</div><div id="cB">煞車</div><div id="cG">油門</div></div>
+<div id="controls"><div id="tL">◀ 左車道</div><div id="tB">🛑 煞車</div><div id="tR">右車道 ▶</div></div>
 
 <div id="startScreen" class="screen">
   <h1>債券賽車</h1>
-  <h2>忠孝東路 → 台北 101</h2>
-  <p>從忠孝復興出發，沿忠孝東路往東，在<b>市府路右轉</b>開到台北 101。<br>
-  路邊有 <b>6 塊債券資訊板</b>，看清楚！抵達終點後要回答剛剛看到的條件。<br>
-  閃開路上的車流，撞到會扣分。</p>
-  <div class="keys">
-    <span><kbd>↑</kbd><kbd>W</kbd></span><span>油門</span>
-    <span><kbd>↓</kbd><kbd>S</kbd></span><span>煞車／停住後倒車</span>
-    <span><kbd>←</kbd><kbd>→</kbd></span><span>方向盤</span>
-  </div>
-  <p style="font-size:13px;margin-top:8px">手機：左下轉向、右下煞車與油門</p>
-  <button class="btn" id="startBtn" disabled>城市建造中…</button>
-  <div id="loadMsg"></div>
+  <h2>忠孝東路 → 台北 101（Google 真實 3D）</h2>
+  <p>車子會沿著真實路線前進，沿路大樓旁掛著 <b>6 塊債券資訊板</b>，看清楚再開！抵達 101 後要回答剛剛看到的條件。<br><br>
+  電腦：← → 換車道，↓ 或空白鍵煞車（自動油門）<br>手機：左右按鈕換車道，中間煞車<br>撞到 🚧 會大減速並扣分。</p>
+  <button class="btn" id="startBtn" disabled>地圖載入中…</button>
+  <div id="err"></div>
 </div>
 
 <div id="quizScreen" class="screen hidden">
@@ -111,15 +81,14 @@
   <button class="btn ghost" id="againBtn">再跑一次</button>
 </div>
 
-<!-- 真實街道資料：由 app.py 從 OpenStreetMap 下載後放進來；沒有資料時遊戲會自動用內建街景 -->
-<script id="osmData" type="application/json">__OSM_DATA__</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 /* =========================================================
-   ★ 設定區：換債券只需改 BOND ★
-   value = 正確答案（顯示在路邊資訊板），options = 三個錯誤選項
-   以下為範例數據，上線前請依實際商品條件修改
+   ★ 設定區：只需改這裡 ★
    ========================================================= */
+const GOOGLE_MAPS_API_KEY = '請把你的金鑰貼在這裡';   // ← 貼上 Google Maps API 金鑰
+
+// 債券條件：value = 正確答案（顯示在路邊資訊板），options = 三個錯誤選項
+// 以下為範例數據，上線前請依實際商品條件修改
 const BOND = {
   facts: [
     { key: '發行人',   value: 'NVIDIA 輝達', options: ['Apple 蘋果', 'Microsoft 微軟', 'Amazon 亞馬遜'] },
@@ -131,621 +100,196 @@ const BOND = {
   ]
 };
 
-// 比賽路線（真實經緯度）：忠孝東路往東 → 市府路右轉往南 → 台北101
+// 真實路線：忠孝東路（忠孝復興 → 市府路口）→ 市府路南下 → 台北101
+// 若鏡頭偏離馬路，微調這裡的經緯度即可（可在 Google 地圖按右鍵取得座標）
 const ROUTE = [
-  { name: '忠孝復興', sign: '起點 忠孝復興',            lat: 25.04163, lng: 121.54367 },
-  { name: '忠孝敦化', sign: '敦化南路 Dunhua S. Rd.',   lat: 25.04148, lng: 121.54920 },
-  { name: '國父紀念館', sign: '光復南路 國父紀念館',     lat: 25.04130, lng: 121.55760 },
-  { name: '市府路口', sign: '市府路 右轉往 101 ➜',       lat: 25.04100, lng: 121.56250 },
-  { name: '台北101',  sign: '🏁 台北101 終點',           lat: 25.03460, lng: 121.56250 },
+  { name: '忠孝復興',   lat: 25.04175, lng: 121.54370 },
+  { name: '忠孝敦化',   lat: 25.04158, lng: 121.55120 },
+  { name: '國父紀念館', lat: 25.04135, lng: 121.55760 },
+  { name: '市府路口',   lat: 25.04118, lng: 121.56400 },
+  { name: '台北101',    lat: 25.03400, lng: 121.56400 },
 ];
-const LANDMARKS = {
-  t101: { lat: 25.03363, lng: 121.56450 },
-  sys:  { lat: 25.04016, lng: 121.55998 },   // 國父紀念館
-};
 
-const ROAD_HALF = 11;          // 路寬一半（公尺），單向 3 線道
-const LANE_W = 3.5;
-const MAX_SPEED = 30;          // 公尺/秒（約 108 km/h）
-const TRAFFIC_COUNT = 28;      // 路上車輛數
-const LB_KEY = 'bondrace_city_lb';
+// 鏡頭：tilt 俯角（90=平視）、range 鏡頭離注視點幾公尺、altitude 注視點海拔（公尺）、lookAhead 往前看幾公尺
+// 畫面太高就把 range 調小；鏡頭鑽進地面或大樓就把 altitude 調大
+const CAM = { tilt: 75, range: 90, altitude: 45, lookAhead: 40 };
+const MAX_SPEED = 20;        // 公尺/秒（約 72 km/h）
+const LANE_OFFSET = 4;       // 左右車道偏移（公尺）
+const BOARD_SIDE_OFFSET = 16; // 資訊板離路中線幾公尺
+const BOARD_HEIGHT = 20;      // 資訊板離地高度（公尺）
+const OBSTACLE_COUNT = 10;
+const LB_KEY = 'bondrace3d_lb';
 
-/* ---------------- 座標：經緯度 → 公尺（x 往東、z 往南） ---------------- */
-const ORIGIN = { lat: 25.04163, lng: 121.54367 };
-const M_LAT = 110950, M_LNG = 111320 * Math.cos(25.04 * Math.PI / 180);
-function L(lat, lng) { return { x: (lng - ORIGIN.lng) * M_LNG, z: -(lat - ORIGIN.lat) * M_LAT }; }
-
-/* ---------------- 路線幾何（轉角做圓弧） ---------------- */
-const RAW = ROUTE.map(p => L(p.lat, p.lng));
-const PATH = [];          // 平滑後的路線點
-const KEY_IDX = [0];      // 每個 ROUTE 點對應在 PATH 的位置（距離）
-(function buildPath() {
-  const R = 22;
-  PATH.push(RAW[0]);
-  for (let i = 1; i < RAW.length - 1; i++) {
-    const A = RAW[i - 1], B = RAW[i], C = RAW[i + 1];
-    const l1 = Math.hypot(B.x - A.x, B.z - A.z), l2 = Math.hypot(C.x - B.x, C.z - B.z);
-    const u1 = { x: (B.x - A.x) / l1, z: (B.z - A.z) / l1 }, u2 = { x: (C.x - B.x) / l2, z: (C.z - B.z) / l2 };
-    const cos = Math.max(-1, Math.min(1, u1.x * u2.x + u1.z * u2.z)), th = Math.acos(cos);
-    const t = Math.min(R * Math.tan(th / 2), l1 * 0.4, l2 * 0.4);
-    if (t < 0.5) { PATH.push(B); continue; }
-    const P0 = { x: B.x - u1.x * t, z: B.z - u1.z * t }, P2 = { x: B.x + u2.x * t, z: B.z + u2.z * t };
-    for (let k = 0; k <= 10; k++) {
-      const s = k / 10, a = (1 - s) * (1 - s), b = 2 * (1 - s) * s, c = s * s;
-      PATH.push({ x: a * P0.x + b * B.x + c * P2.x, z: a * P0.z + b * B.z + c * P2.z });
-    }
-  }
-  PATH.push(RAW[RAW.length - 1]);
-})();
-const SEG = [], CUM = [0];
-for (let i = 0; i < PATH.length - 1; i++) {
-  const a = PATH[i], b = PATH[i + 1], len = Math.hypot(b.x - a.x, b.z - a.z) || 0.001;
-  SEG.push({ a, len, dx: (b.x - a.x) / len, dz: (b.z - a.z) / len });
-  CUM.push(CUM[i] + len);
+/* ---------------- 幾何工具 ---------------- */
+const R = 6371000, D2R = Math.PI / 180;
+const lat0 = ROUTE[0].lat;
+function toXY(p) { return { x: (p.lng - ROUTE[0].lng) * D2R * R * Math.cos(lat0 * D2R), y: (p.lat - lat0) * D2R * R }; }
+function toLL(x, y) { return { lat: lat0 + y / R / D2R, lng: ROUTE[0].lng + x / (R * Math.cos(lat0 * D2R)) / D2R }; }
+const pts = ROUTE.map(toXY);
+const segLen = [], cum = [0];
+for (let i = 0; i < pts.length - 1; i++) {
+  const l = Math.hypot(pts[i + 1].x - pts[i].x, pts[i + 1].y - pts[i].y); segLen.push(l); cum.push(cum[i] + l);
 }
-const TOTAL = CUM[CUM.length - 1];
-function project(x, z) {      // 世界座標 → 沿路距離 s、橫向偏移 lat（右側為正）
-  let best = null;
-  for (let i = 0; i < SEG.length; i++) {
-    const g = SEG[i], px = x - g.a.x, pz = z - g.a.z;
-    const t = Math.max(0, Math.min(g.len, px * g.dx + pz * g.dz));
-    const qx = g.a.x + g.dx * t, qz = g.a.z + g.dz * t, d = Math.hypot(x - qx, z - qz);
-    if (!best || d < best.d) best = { d, s: CUM[i] + t, lat: px * -g.dz + pz * g.dx, i };
-  }
-  return best;
+const TOTAL = cum[cum.length - 1];
+// 距離 s（公尺）→ 位置、方向（heading 度，0=北、順時針）
+function at(s) {
+  s = Math.max(0, Math.min(TOTAL, s));
+  let i = 0; while (i < segLen.length - 1 && s > cum[i + 1]) i++;
+  const t = (s - cum[i]) / segLen[i], a = pts[i], b = pts[i + 1];
+  const dx = b.x - a.x, dy = b.y - a.y, len = segLen[i];
+  return { x: a.x + dx * t, y: a.y + dy * t, nx: dx / len, ny: dy / len, heading: (Math.atan2(dx, dy) / D2R + 360) % 360 };
 }
-function at(s) {              // 沿路距離 s → 位置、方向
-  s = Math.max(0, Math.min(TOTAL - 0.001, s));
-  let i = 0; while (i < SEG.length - 1 && s > CUM[i + 1]) i++;
-  const g = SEG[i], t = s - CUM[i];
-  return { x: g.a.x + g.dx * t, z: g.a.z + g.dz * t, dx: g.dx, dz: g.dz, rx: -g.dz, rz: g.dx, h: Math.atan2(g.dx, -g.dz) };
-}
-function pos(s, lat) { const p = at(s); return { x: p.x + p.rx * lat, z: p.z + p.rz * lat, p }; }
-const KEY_S = RAW.map(r => project(r.x, r.z).s);
-const TURN_S = KEY_S[3];
-
-/* ---------------- Three.js 場景 ---------------- */
-const canvas = document.getElementById('gl');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
-renderer.setSize(innerWidth, innerHeight);
-const scene = new THREE.Scene();
-const SKY = 0xbfd8ee;
-scene.background = new THREE.Color(SKY);
-scene.fog = new THREE.Fog(SKY, 120, 650);
-const camera = new THREE.PerspectiveCamera(72, innerWidth / innerHeight, 0.3, 4000);
-scene.add(new THREE.HemisphereLight(0xffffff, 0x667788, 0.85));
-const sun = new THREE.DirectionalLight(0xfff4e0, 0.75); sun.position.set(-300, 500, 200); scene.add(sun);
-addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
-
-function setMsg(t) { document.getElementById('loadMsg').textContent = t; }
-
-// 地面
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(9000, 9000), new THREE.MeshLambertMaterial({ color: 0x8d918c }));
-ground.rotation.x = -Math.PI / 2; ground.position.set(1000, -0.05, 300); scene.add(ground);
-
-// 合併幾何工具：一次加很多四邊形，最後變成一個 mesh（效能好）
-function QuadBatch() { this.p = []; this.c = []; this.uv = []; }
-QuadBatch.prototype.tri = function (a, b, c, col, ua, ub, uc) {
-  this.p.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]);
-  for (let i = 0; i < 3; i++) this.c.push(col[0], col[1], col[2]);
-  if (ua) this.uv.push(ua[0], ua[1], ub[0], ub[1], uc[0], uc[1]); else this.uv.push(0, 0, 0, 0, 0, 0);
-};
-QuadBatch.prototype.quad = function (a, b, c, d, col, uvs) {  // a-b-c-d 逆時針（從正面看）
-  const u = uvs || [[0, 0], [1, 0], [1, 1], [0, 1]];
-  this.tri(a, b, c, col, u[0], u[1], u[2]); this.tri(a, c, d, col, u[0], u[2], u[3]);
-};
-QuadBatch.prototype.mesh = function (mat) {
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(this.p, 3));
-  g.setAttribute('color', new THREE.Float32BufferAttribute(this.c, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv, 2));
-  g.computeVertexNormals();
-  return new THREE.Mesh(g, mat);
-};
-function ribbon(batch, pts, half, y, col) {   // 沿折線畫一條平面帶子
-  for (let i = 0; i < pts.length - 1; i++) {
-    const a = pts[i], b = pts[i + 1], l = Math.hypot(b.x - a.x, b.z - a.z); if (l < 0.01) continue;
-    const nx = -(b.z - a.z) / l * half, nz = (b.x - a.x) / l * half;
-    const ext = Math.min(half, 3) / l, ex = (b.x - a.x) * ext, ez = (b.z - a.z) * ext;
-    batch.quad([a.x - nx - ex, y, a.z - nz - ez], [a.x + nx - ex, y, a.z + nz - ez], [b.x + nx + ex, y, b.z + nz + ez], [b.x - nx + ex, y, b.z - nz + ez], col);
-  }
+function offsetLL(p, lateral) {   // lateral >0 = 行進方向右側
+  return toLL(p.x + p.ny * lateral, p.y - p.nx * lateral);
 }
 
-// 窗戶貼圖
-function windowTexture() {
-  const c = document.createElement('canvas'); c.width = 128; c.height = 128;
-  const g = c.getContext('2d');
-  g.fillStyle = '#e9e6e0'; g.fillRect(0, 0, 128, 128);
-  for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) {
-    const lit = Math.random() < 0.25;
-    g.fillStyle = lit ? '#fff1c2' : '#4d5d70'; g.fillRect(x * 64 + 10, y * 64 + 14, 44, 38);
-    g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(x * 64 + 10, y * 64 + 14, 44, 6);
-  }
-  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
-}
-const PALETTE = [[0.86, 0.84, 0.80], [0.78, 0.76, 0.72], [0.70, 0.72, 0.75], [0.88, 0.82, 0.74], [0.62, 0.64, 0.66], [0.80, 0.70, 0.62], [0.74, 0.80, 0.82]];
+/* ---------------- 載入 Google 3D 地圖 ---------------- */
+(g => { var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window; b = b[c] || (b[c] = {}); var d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams, u = () => h || (h = new Promise(async (f, n) => { await (a = m.createElement("script")); e.set("libraries", [...r] + ""); for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]); e.set("callback", c + ".maps." + q); a.src = `https://maps.${c}apis.com/maps/api/js?` + e; d[q] = f; a.onerror = () => h = n(Error(p + " could not load.")); a.nonce = m.querySelector("script[nonce]")?.nonce || ""; m.head.append(a) })); d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n)) })({ key: GOOGLE_MAPS_API_KEY, v: "weekly", language: "zh-TW", region: "TW" });
 
-// 由多邊形蓋大樓（外牆＋屋頂），pts 為 [{x,z}]
-function addBuilding(walls, roofs, pts, h, col) {
-  let area = 0;
-  for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; area += a.x * b.z - b.x * a.z; }
-  if (Math.abs(area) < 8) return;
-  if (area > 0) pts = pts.slice().reverse();   // 統一方向，讓外牆朝外
-  let u = 0;
-  const vTop = h / 3.4;
-  for (let i = 0; i < pts.length; i++) {
-    const a = pts[i], b = pts[(i + 1) % pts.length], l = Math.hypot(b.x - a.x, b.z - a.z);
-    if (l < 0.05) continue;
-    const u2 = u + l / 4.2;
-    walls.quad([a.x, 0, a.z], [b.x, 0, b.z], [b.x, h, b.z], [a.x, h, a.z], col, [[u, 0], [u2, 0], [u2, vTop], [u, vTop]]);
-    u = u2;
-  }
-  const v2 = pts.map(p => new THREE.Vector2(p.x, p.z));
-  let tris; try { tris = THREE.ShapeUtils.triangulateShape(v2, []); } catch (e) { tris = []; }
-  const rc = [col[0] * 0.8, col[1] * 0.8, col[2] * 0.8];
-  for (const t of tris) {
-    const A = pts[t[0]], B = pts[t[1]], C = pts[t[2]];
-    // 屋頂朝上
-    const cross = (B.x - A.x) * (C.z - A.z) - (B.z - A.z) * (C.x - A.x);
-    if (cross < 0) roofs.tri([A.x, h, A.z], [B.x, h, B.z], [C.x, h, C.z], rc);
-    else roofs.tri([A.x, h, A.z], [C.x, h, C.z], [B.x, h, B.z], rc);
-  }
-}
-function hash(n) { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+let map, boards = [], obstacles = [], stationMarks = [];
+let s = 0, lane = 0, laneTarget = 0, speed = 0, startTime = 0, elapsed = 0, state = 'start';
+let boardsSeen = 0, coneHits = 0;
+const keys = {}; let touchSteer = 0, touchBrake = false;
 
-/* ---------------- 讀取城市資料 ---------------- */
-function readOSM() {
+async function init() {
   try {
-    const txt = document.getElementById('osmData').textContent.trim();
-    if (!txt || txt.startsWith('__')) return null;
-    const d = JSON.parse(txt);
-    if (!d || !d.b || !d.b.length) return null;
-    return d;
-  } catch (e) { console.warn('OSM 資料格式錯誤，改用內建街景', e); return null; }
-}
-
-function nearLandmark(x, z) {
-  for (const k in LANDMARKS) { const p = L(LANDMARKS[k].lat, LANDMARKS[k].lng); if (Math.hypot(x - p.x, z - p.z) < (k === 't101' ? 130 : 55)) return true; }
-  return false;
-}
-
-function buildCity() {
-  const osm = readOSM();
-  const walls = new QuadBatch(), roofs = new QuadBatch(), roads = new QuadBatch();
-  const CLEAR = ROAD_HALF + 4.5;   // 比賽道路兩側淨空
-  let count = 0;
-  if (osm) {
-    // 其他街道
-    for (const r of osm.r) {
-      const w = r[0], arr = r[1], pts = [];
-      for (let i = 0; i < arr.length; i += 2) pts.push({ x: arr[i], z: arr[i + 1] });
-      ribbon(roads, pts, w / 2, 0.02, [0.33, 0.34, 0.36]);
-    }
-    // 大樓
-    osm.b.forEach((bd, idx) => {
-      const arr = bd[1], pts = [];
-      for (let i = 0; i < arr.length; i += 2) pts.push({ x: arr[i], z: arr[i + 1] });
-      if (pts.length < 3) return;
-      let cx = 0, cz = 0; pts.forEach(p => { cx += p.x; cz += p.z; }); cx /= pts.length; cz /= pts.length;
-      const pc = project(cx, cz);
-      if (pc.d > 320 || nearLandmark(cx, cz)) return;
-      for (const p of pts) { const q = project(p.x, p.z); if (q.d < CLEAR) return; }
-      const h = bd[0] > 0 ? bd[0] : 9 + Math.floor(hash(idx) * 8) * 3.3;
-      addBuilding(walls, roofs, pts, h, PALETTE[idx % PALETTE.length]);
-      count++;
+    const lib = await google.maps.importLibrary('maps3d');
+    const { Map3DElement, Marker3DElement, Marker3DInteractiveElement, PopoverElement } = lib;
+    const { PinElement } = await google.maps.importLibrary('marker');
+    const p0 = at(CAM.lookAhead), c0 = offsetLL(p0, 0);
+    map = new Map3DElement({
+      center: { lat: c0.lat, lng: c0.lng, altitude: CAM.altitude },
+      heading: p0.heading, tilt: CAM.tilt, range: CAM.range, mode: 'SATELLITE',
     });
-  }
-  if (!osm || count < 30) {
-    // 內建街景：沿路兩側蓋街廓
-    const crossS = KEY_S.slice(1, 4).concat([KEY_S[0] + 280, KEY_S[1] + 300, KEY_S[2] - 200, TURN_S + 260]);
-    for (const cs of crossS) {
-      const p = at(cs), pts = [];
-      for (const k of [-220, 220]) pts.push({ x: p.x + p.rx * k, z: p.z + p.rz * k });
-      ribbon(roads, pts, 7, 0.02, [0.33, 0.34, 0.36]);
-    }
-    // 忠孝東路繼續往東、市府路往北的延伸段
-    const c3 = RAW[3], u = { x: RAW[3].x - RAW[2].x, z: RAW[3].z - RAW[2].z }, ul = Math.hypot(u.x, u.z);
-    ribbon(roads, [c3, { x: c3.x + u.x / ul * 320, z: c3.z + u.z / ul * 320 }], ROAD_HALF, 0.02, [0.33, 0.34, 0.36]);
-    const v = { x: RAW[4].x - RAW[3].x, z: RAW[4].z - RAW[3].z }, vl = Math.hypot(v.x, v.z);
-    ribbon(roads, [c3, { x: c3.x - v.x / vl * 260, z: c3.z - v.z / vl * 260 }], 9, 0.02, [0.33, 0.34, 0.36]);
-    const sysP = L(LANDMARKS.sys.lat, LANDMARKS.sys.lng);
-    let n = 0;
-    for (const side of [-1, 1]) {
-      let s = 8;
-      while (s < TOTAL - 5) {
-        const len = 18 + hash(n * 3 + side) * 28, dep = 16 + hash(n * 5 + 1) * 18;
-        const mid = s + len / 2;
-        if (crossS.some(c => Math.abs(c - mid) < len / 2 + 9) || Math.abs(mid - TURN_S) < 50) { s += 14; n++; continue; }
-        const setback = ROAD_HALF + 6 + hash(n * 7) * 3;
-        const a = pos(s, side * setback), b = pos(s + len, side * setback);
-        const c = pos(s + len, side * (setback + dep)), d = pos(s, side * (setback + dep));
-        const cx = (a.x + c.x) / 2, cz = (a.z + c.z) / 2;
-        const inPark = Math.abs(cx - sysP.x) < 170 && Math.abs(cz - sysP.z) < 130;
-        if (!inPark && !nearLandmark(cx, cz)) {
-          const tall = hash(n * 11) > 0.85;
-          const h = tall ? 70 + hash(n) * 80 : 12 + Math.floor(hash(n * 13) * 9) * 3.3;
-          addBuilding(walls, roofs, [a, b, c, d], h, PALETTE[n % PALETTE.length]);
-          // 後排
-          const e = pos(s, side * (setback + dep + 6)), f = pos(s + len, side * (setback + dep + 6));
-          const g2 = pos(s + len, side * (setback + dep + 34)), h2 = pos(s, side * (setback + dep + 34));
-          addBuilding(walls, roofs, [e, f, g2, h2], 15 + hash(n * 17) * 40, PALETTE[(n + 3) % PALETTE.length]);
-        }
-        s += len + 4 + hash(n * 19) * 4; n++;
+    try { map.defaultUIHidden = true; } catch (e) {}
+    try { map.gestureHandling = 'none'; } catch (e) {}
+    document.body.prepend(map);
+    placeCamera();
+    // 地圖初始化完成後再強制拉一次鏡頭，避免被預設的遠景蓋掉
+    map.addEventListener('gmp-steadychange', () => { if (state !== 'play') placeCamera(); });
+    setTimeout(placeCamera, 1500);
+
+    // 債券資訊板：掛在路邊大樓旁
+    const n = BOND.facts.length;
+    BOND.facts.forEach((f, i) => {
+      const dist = TOTAL * (i + 1) / (n + 1);
+      const side = i % 2 === 0 ? -1 : 1;
+      const ll = offsetLL(at(dist), side * BOARD_SIDE_OFFSET);
+      const pos = { lat: ll.lat, lng: ll.lng, altitude: BOARD_HEIGHT };
+      let placed = false;
+      if (PopoverElement && Marker3DInteractiveElement) {
+        try {
+          const mk = new Marker3DInteractiveElement({ position: pos, altitudeMode: 'RELATIVE_TO_GROUND', extruded: true });
+          const pin = new PinElement({ background: '#e8c468', borderColor: '#0b2545', glyphText: String(i + 1), glyphColor: '#0b2545', scale: 1.4 });
+          mk.append(pin);
+          const pop = new PopoverElement({ open: true, positionAnchor: mk });
+          const div = document.createElement('div'); div.className = 'board';
+          div.innerHTML = `<small>資訊板 ${i + 1} ｜ ${f.key}</small><strong>${f.value}</strong>`;
+          pop.append(div);
+          map.append(mk); map.append(pop); placed = true;
+        } catch (e) { console.warn('Popover 不可用，改用標籤', e); }
       }
+      if (!placed) {
+        const mk = new Marker3DElement({ position: pos, altitudeMode: 'RELATIVE_TO_GROUND', extruded: true, label: `資訊板${i + 1} ${f.key}：${f.value}` });
+        const pin = new PinElement({ background: '#e8c468', borderColor: '#0b2545', glyphText: String(i + 1), glyphColor: '#0b2545', scale: 1.6 });
+        mk.append(pin); map.append(mk);
+      }
+      boards.push({ dist, seen: false });
+    });
+
+    // 障礙物 🚧（資訊板附近不放）
+    for (let i = 0; i < OBSTACLE_COUNT; i++) {
+      const dist = 120 + Math.random() * (TOTAL - 240);
+      if (boards.some(b => Math.abs(b.dist - dist) < 60)) continue;
+      const ln = Math.random() < 0.5 ? -1 : 1;
+      const ll = offsetLL(at(dist), ln * LANE_OFFSET);
+      const mk = new Marker3DElement({ position: { lat: ll.lat, lng: ll.lng, altitude: 2 }, altitudeMode: 'RELATIVE_TO_GROUND' });
+      const pin = new PinElement({ background: '#ff6a00', borderColor: '#000', glyphText: '🚧', scale: 1.3 });
+      mk.append(pin); map.append(mk);
+      obstacles.push({ dist, lane: ln, mk, hit: false });
+    }
+
+    // 站點進度
+    const prog = document.getElementById('progress');
+    ROUTE.forEach((r, i) => {
+      const t = cum[i] / TOTAL;
+      const el = document.createElement('div'); el.className = 'st'; el.style.left = (t * 100) + '%';
+      el.innerHTML = `<i></i>${r.name}`; prog.appendChild(el);
+      stationMarks.push({ dist: cum[i], name: r.name, hit: i === 0 });
+    });
+    document.getElementById('boardsTotal').textContent = n;
+
+    const btn = document.getElementById('startBtn'); btn.disabled = false; btn.textContent = '🏁 出發';
+    requestAnimationFrame(loop);
+  } catch (e) {
+    document.getElementById('err').textContent = '地圖載入失敗：' + e.message + '（請確認金鑰正確、已啟用 Maps JavaScript API 與 Map Tiles API）';
+    console.error(e);
+  }
+}
+
+/* ---------------- 遊戲迴圈 ---------------- */
+let last = 0;
+function loop(ts) {
+  requestAnimationFrame(loop);
+  const dt = Math.min((ts - last) / 1000 || 0, 0.05); last = ts;
+  if (state !== 'play') return;
+
+  const brake = keys.ArrowDown || keys.KeyS || keys.Space || touchBrake;
+  speed += (brake ? -16 : 7) * dt;
+  speed = Math.max(0, Math.min(MAX_SPEED, speed));
+  let input = touchSteer;
+  if (keys.ArrowLeft || keys.KeyA) input = -1;
+  if (keys.ArrowRight || keys.KeyD) input = 1;
+  if (input) laneTarget = input;
+  lane += (laneTarget - lane) * Math.min(1, 5 * dt);
+  s += speed * dt;
+  elapsed = (performance.now() - startTime) / 1000;
+
+  for (const o of obstacles) {
+    if (!o.hit && Math.abs(o.dist - s) < 3 && Math.abs(o.lane - lane) < 0.6) {
+      o.hit = true; o.mk.remove(); coneHits++; speed *= 0.3;
+      const f = document.getElementById('flash'); f.style.opacity = 1; setTimeout(() => f.style.opacity = 0, 150);
     }
   }
-  scene.add(walls.mesh(new THREE.MeshLambertMaterial({ map: windowTexture(), vertexColors: true })));
-  scene.add(roofs.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })));
-  scene.add(roads.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })));
-  return osm ? 'OpenStreetMap 真實街道' : '內建街景';
-}
+  for (const b of boards) if (!b.seen && s > b.dist) { b.seen = true; boardsSeen++; document.getElementById('boards').textContent = boardsSeen; }
+  for (const st of stationMarks) if (!st.hit && s > st.dist) { st.hit = true; toast('經過 ' + st.name); }
 
-/* ---------------- 比賽道路：路面、人行道、標線 ---------------- */
-const BOARD_S = [];
-function planBoards() {
-  const n = BOND.facts.length, start = 160, end = TOTAL - 110;
-  for (let i = 0; i < n; i++) {
-    let s = start + (end - start) * i / (n - 1);
-    if (Math.abs(s - TURN_S) < 60) s = TURN_S + (s < TURN_S ? -70 : 70);
-    BOARD_S.push(s);
-  }
-}
-const nearBoard = s => BOARD_S.some(b => s > b - 50 && s < b + 10);   // 資訊板前方不種樹、不放路燈，避免擋住
-function buildRoad() {
-  const surf = new QuadBatch();
-  const sp = [], rp = [];
-  for (let s = 0; s <= TOTAL; s += 4) { const p = at(s); sp.push({ x: p.x, z: p.z }); }
-  sp.push(at(TOTAL));
-  ribbon(surf, sp, ROAD_HALF + 5, 0.03, [0.66, 0.65, 0.62]);   // 人行道
-  ribbon(surf, sp, ROAD_HALF, 0.06, [0.27, 0.28, 0.30]);       // 路面
-  scene.add(surf.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })));
-  const mk = new QuadBatch(), W = [1, 1, 1], Y = [1, 0.82, 0.2];
-  const stripe = (s0, s1, lat, w, col) => {
-    const a = pos(s0, lat - w / 2), b = pos(s0, lat + w / 2), c = pos(s1, lat + w / 2), d = pos(s1, lat - w / 2);
-    mk.quad([a.x, 0.09, a.z], [b.x, 0.09, b.z], [c.x, 0.09, c.z], [d.x, 0.09, d.z], col);
-  };
-  for (let s = 0; s < TOTAL - 4; s += 2) {
-    stripe(s, s + 2, -0.25, 0.15, Y); stripe(s, s + 2, 0.25, 0.15, Y);         // 中央雙黃線
-    stripe(s, s + 2, -ROAD_HALF + 0.4, 0.2, W); stripe(s, s + 2, ROAD_HALF - 0.4, 0.2, W);
-  }
-  for (let s = 0; s < TOTAL - 8; s += 10) for (const lat of [-2 * LANE_W, -LANE_W, LANE_W, 2 * LANE_W]) stripe(s, s + 4, lat, 0.15, W);
-  // 斑馬線
-  for (const ks of KEY_S.slice(1, 4)) for (const off of [-16, 16]) {
-    const s0 = ks + off - 2; if (s0 < 0 || s0 > TOTAL - 5) continue;
-    for (let lat = -ROAD_HALF + 1; lat < ROAD_HALF - 0.5; lat += 1.6) stripe(s0, s0 + 4, lat, 0.8, W);
-  }
-  scene.add(mk.mesh(new THREE.MeshBasicMaterial({ vertexColors: true })));
-  // 路燈
-  const poleMat = new THREE.MeshLambertMaterial({ color: 0x55595f });
-  const poleG = new THREE.CylinderGeometry(0.12, 0.16, 8, 6), armG = new THREE.BoxGeometry(0.1, 0.1, 2.2), lampG = new THREE.BoxGeometry(0.5, 0.2, 0.9);
-  const lampMat = new THREE.MeshBasicMaterial({ color: 0xfff3c4 });
-  for (let s = 20; s < TOTAL - 10; s += 32) for (const side of [-1, 1]) {
-    if (nearBoard(s)) continue;
-    const p = pos(s, side * (ROAD_HALF + 1.2)), g = new THREE.Group();
-    const pole = new THREE.Mesh(poleG, poleMat); pole.position.y = 4; g.add(pole);
-    const arm = new THREE.Mesh(armG, poleMat); arm.position.set(0, 7.9, -1.1); g.add(arm);
-    const lamp = new THREE.Mesh(lampG, lampMat); lamp.position.set(0, 7.8, -2.1); g.add(lamp);
-    g.position.set(p.x, 0, p.z);
-    g.rotation.y = Math.atan2(side * p.p.rx, side * p.p.rz);
-    scene.add(g);
-  }
-  // 行道樹
-  const trunkG = new THREE.CylinderGeometry(0.18, 0.25, 2.6, 6), crownG = new THREE.IcosahedronGeometry(2.1, 0);
-  const trunkM = new THREE.MeshLambertMaterial({ color: 0x6b4f35 }), crownM = new THREE.MeshLambertMaterial({ color: 0x4e8a46 });
-  for (let s = 36; s < TOTAL - 10; s += 32) for (const side of [-1, 1]) {
-    if (nearBoard(s)) continue;
-    const p = pos(s, side * (ROAD_HALF + 3.2));
-    const t = new THREE.Mesh(trunkG, trunkM); t.position.set(p.x, 1.3, p.z); scene.add(t);
-    const c = new THREE.Mesh(crownG, crownM); c.position.set(p.x, 3.6, p.z); c.scale.y = 1.2; scene.add(c);
-  }
-}
+  placeCamera();
 
-/* ---------------- 地標：101、國父紀念館 ---------------- */
-function build101() {
-  const p = L(LANDMARKS.t101.lat, LANDMARKS.t101.lng);
-  const g = new THREE.Group();
-  const glass = new THREE.MeshStandardMaterial({ color: 0x5f9ea0, metalness: 0.45, roughness: 0.3, fog: false });
-  const dark = new THREE.MeshStandardMaterial({ color: 0x3e6e74, metalness: 0.5, roughness: 0.35, fog: false });
-  const podium = new THREE.Mesh(new THREE.BoxGeometry(130, 56, 110), new THREE.MeshLambertMaterial({ color: 0x9fb3b8, fog: false }));
-  podium.position.y = 28; g.add(podium);
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(30, 41, 100, 4), glass); base.rotation.y = Math.PI / 4; base.position.y = 106; g.add(base);
-  let y = 156;
-  for (let i = 0; i < 8; i++) {
-    const seg = new THREE.Mesh(new THREE.CylinderGeometry(33, 25, 33, 4), i % 2 ? glass : dark);
-    seg.rotation.y = Math.PI / 4; seg.position.y = y + 16.5; g.add(seg);
-    const band = new THREE.Mesh(new THREE.CylinderGeometry(25.5, 25.5, 1.2, 4), new THREE.MeshBasicMaterial({ color: 0xe8c468, fog: false }));
-    band.rotation.y = Math.PI / 4; band.position.y = y + 0.6; g.add(band);
-    y += 33;
-  }
-  const top1 = new THREE.Mesh(new THREE.CylinderGeometry(17, 21, 26, 4), glass); top1.rotation.y = Math.PI / 4; top1.position.y = y + 13; g.add(top1); y += 26;
-  const top2 = new THREE.Mesh(new THREE.CylinderGeometry(9, 12, 16, 4), dark); top2.rotation.y = Math.PI / 4; top2.position.y = y + 8; g.add(top2); y += 16;
-  const spire = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 3.2, 60, 8), new THREE.MeshLambertMaterial({ color: 0xdddddd, fog: false }));
-  spire.position.y = y + 30; g.add(spire);
-  g.position.set(p.x, 0, p.z); scene.add(g);
+  document.getElementById('spd').textContent = Math.round(speed * 3.6);
+  document.getElementById('time').textContent = elapsed.toFixed(1);
+  document.getElementById('carMark').style.left = Math.min(100, s / TOTAL * 100) + '%';
+  if (s >= TOTAL - 5) finishRace();
 }
-function buildSYS() {
-  const p = L(LANDMARKS.sys.lat, LANDMARKS.sys.lng);
-  const park = new THREE.Mesh(new THREE.PlaneGeometry(330, 250), new THREE.MeshLambertMaterial({ color: 0x6f9c5c }));
-  park.rotation.x = -Math.PI / 2; park.position.set(p.x, 0.01, p.z); scene.add(park);
-  const plaza = new THREE.Mesh(new THREE.PlaneGeometry(110, 110), new THREE.MeshLambertMaterial({ color: 0xc9c1b0 }));
-  plaza.rotation.x = -Math.PI / 2; plaza.position.set(p.x, 0.02, p.z); scene.add(plaza);
-  const base = new THREE.Mesh(new THREE.BoxGeometry(70, 6, 70), new THREE.MeshLambertMaterial({ color: 0xe8e2d4 })); base.position.set(p.x, 3, p.z); scene.add(base);
-  const hall = new THREE.Mesh(new THREE.BoxGeometry(56, 16, 56), new THREE.MeshLambertMaterial({ color: 0xf4efe4 })); hall.position.set(p.x, 14, p.z); scene.add(hall);
-  const roofM = new THREE.MeshLambertMaterial({ color: 0xd9a52b });
-  const roof = new THREE.Mesh(new THREE.ConeGeometry(48, 14, 4), roofM); roof.rotation.y = Math.PI / 4; roof.position.set(p.x, 29, p.z); scene.add(roof);
-  const roof2 = new THREE.Mesh(new THREE.ConeGeometry(18, 12, 4), roofM); roof2.rotation.y = Math.PI / 4; roof2.position.set(p.x, 39, p.z); scene.add(roof2);
-  const colM = new THREE.MeshLambertMaterial({ color: 0xa83a2c });
-  for (let i = -3; i <= 3; i++) for (const side of [-1, 1]) {
-    const c = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 16, 8), colM);
-    c.position.set(p.x + i * 8, 14, p.z + side * 28.5); scene.add(c);
-  }
+// 鏡頭：看車前方 lookAhead 公尺處，heading 沿路線；每次都把 tilt、range 一起設定
+function placeCamera() {
+  if (!map) return;
+  const pa = at(Math.min(TOTAL, s + CAM.lookAhead));
+  const ll = offsetLL(pa, lane * LANE_OFFSET);
+  map.center = { lat: ll.lat, lng: ll.lng, altitude: CAM.altitude };
+  map.heading = pa.heading;
+  map.tilt = CAM.tilt;
+  map.range = CAM.range;
 }
-
-/* ---------------- 資訊板、路口門架 ---------------- */
-function fitFont(ctx, text, maxW, start, weight) {
-  let size = start;
-  do { ctx.font = `${weight} ${size}px "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif`; size -= 4; }
-  while (ctx.measureText(text).width > maxW && size > 20);
-}
-function boardTexture(idx, key, value) {
-  const c = document.createElement('canvas'); c.width = 1024; c.height = 512;
-  const g = c.getContext('2d');
-  g.fillStyle = '#0b2545'; g.fillRect(0, 0, 1024, 512);
-  g.strokeStyle = '#e8c468'; g.lineWidth = 20; g.strokeRect(12, 12, 1000, 488);
-  g.fillStyle = '#e8c468'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  fitFont(g, `資訊板 ${idx} ｜ ${key}`, 900, 76, '600'); g.fillText(`資訊板 ${idx} ｜ ${key}`, 512, 115);
-  g.fillStyle = '#ffffff'; fitFont(g, value, 940, 200, '900'); g.fillText(value, 512, 320);
-  const t = new THREE.CanvasTexture(c); t.anisotropy = 8; return t;
-}
-function signTexture(text, bg) {
-  const c = document.createElement('canvas'); c.width = 1024; c.height = 200;
-  const g = c.getContext('2d');
-  g.fillStyle = bg; g.fillRect(0, 0, 1024, 200);
-  g.strokeStyle = '#fff'; g.lineWidth = 8; g.strokeRect(10, 10, 1004, 180);
-  g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  fitFont(g, text, 940, 110, '800'); g.fillText(text, 512, 104);
-  return new THREE.CanvasTexture(c);
-}
-const BOARDS = [];
-function faceAngle(nx, nz) { return Math.atan2(nx, nz); }   // 讓平面(預設朝 +z)朝向 (nx,nz)
-function buildBoards() {
-  const poleM = new THREE.MeshLambertMaterial({ color: 0x3a3d44 });
-  BOND.facts.forEach((f, i) => {
-    const s = BOARD_S[i];
-    const side = i % 2 === 0 ? 1 : -1;
-    const p = pos(s, side * (ROAD_HALF + 3.8)), d = p.p;
-    let nx = -d.dx - side * 0.35 * d.rx, nz = -d.dz - side * 0.35 * d.rz; const l = Math.hypot(nx, nz); nx /= l; nz /= l;
-    const g = new THREE.Group();
-    const board = new THREE.Mesh(new THREE.PlaneGeometry(13, 6.5), new THREE.MeshBasicMaterial({ map: boardTexture(i + 1, f.key, f.value), fog: false }));
-    board.position.y = 8; g.add(board);
-    const back = new THREE.Mesh(new THREE.BoxGeometry(13.6, 7.1, 0.4), poleM); back.position.set(0, 8, -0.3); g.add(back);
-    for (const x of [-4, 4]) { const pl = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 5, 8), poleM); pl.position.set(x, 2.5, -0.4); g.add(pl); }
-    g.position.set(p.x, 0, p.z); g.rotation.y = faceAngle(nx, nz);
-    scene.add(g);
-    BOARDS.push({ s, seen: false, x: p.x, z: p.z });
-  });
-}
-function buildGantries() {
-  const poleM = new THREE.MeshLambertMaterial({ color: 0x50545b });
-  ROUTE.forEach((r, i) => {
-    if (i === 0) return;
-    const isEnd = i === ROUTE.length - 1;
-    const s = isEnd ? TOTAL - 6 : (i === 3 ? KEY_S[3] - 90 : KEY_S[i] - 25);
-    const c = at(s), g = new THREE.Group();
-    for (const lat of [-ROAD_HALF - 0.6, ROAD_HALF + 0.6]) { const pl = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 8, 8), poleM); pl.position.set(lat, 4, 0); g.add(pl); }
-    const bar = new THREE.Mesh(new THREE.BoxGeometry(ROAD_HALF * 2 + 1.2, 0.5, 0.5), poleM); bar.position.y = 7.8; g.add(bar);
-    const sign = new THREE.Mesh(new THREE.PlaneGeometry(16, 3.1), new THREE.MeshBasicMaterial({ map: signTexture(r.sign, isEnd ? '#a8251f' : '#1a6e3a'), fog: false }));
-    sign.position.y = 9.7; g.add(sign);
-    g.position.set(c.x, 0, c.z); g.rotation.y = faceAngle(-c.dx, -c.dz);
-    scene.add(g);
-  });
-  // 終點方格線
-  const mk = new QuadBatch();
-  for (let k = 0; k < 2; k++) for (let j = 0; j < 22; j++) {
-    const s0 = TOTAL - 8 + k * 1, lat0 = -ROAD_HALF + j;
-    if ((j + k) % 2) continue;
-    const a = pos(s0, lat0), b = pos(s0, lat0 + 1), c = pos(s0 + 1, lat0 + 1), d = pos(s0 + 1, lat0);
-    mk.quad([a.x, 0.1, a.z], [b.x, 0.1, b.z], [c.x, 0.1, c.z], [d.x, 0.1, d.z], [0.05, 0.05, 0.05]);
-  }
-  const white = new QuadBatch(); const a = pos(TOTAL - 8, -ROAD_HALF), b = pos(TOTAL - 8, ROAD_HALF), c = pos(TOTAL - 6, ROAD_HALF), d = pos(TOTAL - 6, -ROAD_HALF);
-  white.quad([a.x, 0.095, a.z], [b.x, 0.095, b.z], [c.x, 0.095, c.z], [d.x, 0.095, d.z], [1, 1, 1]);
-  scene.add(white.mesh(new THREE.MeshBasicMaterial({ vertexColors: true })));
-  scene.add(mk.mesh(new THREE.MeshBasicMaterial({ vertexColors: true })));
-  // 轉彎箭頭（地上）
-  const arr = new QuadBatch();
-  for (let k = 0; k < 3; k++) {
-    const s0 = TURN_S - 120 + k * 30;
-    for (const lat of [LANE_W * 0.5, LANE_W * 1.5, LANE_W * 2.5]) {
-      const tip = pos(s0 + 5, lat + 1.4), l1 = pos(s0, lat - 0.6), l2 = pos(s0 + 1.2, lat - 0.6);
-      arr.tri([l1.x, 0.1, l1.z], [tip.x, 0.1, tip.z], [l2.x, 0.1, l2.z], [1, 1, 1]);
-      arr.tri([l1.x, 0.1, l1.z], [l2.x, 0.1, l2.z], [tip.x, 0.1, tip.z], [1, 1, 1]);
-    }
-  }
-  scene.add(arr.mesh(new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide })));
-}
-
-/* ---------------- 車流 ---------------- */
-const TRAFFIC = [];
-const CAR_COLORS = [0xf2f2f2, 0x1d1d1f, 0x9aa1a8, 0x8b1e24, 0x24467a, 0xc9c9c9, 0x3d4a3a, 0x5c5f66];
-function makeCar(kind) {
-  const g = new THREE.Group();
-  const isBus = kind === 'bus', isTaxi = kind === 'taxi';
-  const L2 = isBus ? 11 : 4.5, W2 = isBus ? 2.5 : 1.85, H = isBus ? 3.1 : 0.75;
-  const col = isBus ? 0x2f7d4f : isTaxi ? 0xf2c21b : CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)];
-  const body = new THREE.Mesh(new THREE.BoxGeometry(W2, H, L2), new THREE.MeshLambertMaterial({ color: col }));
-  body.position.y = 0.35 + H / 2; g.add(body);
-  const glassM = new THREE.MeshLambertMaterial({ color: 0x1c2a36 });
-  if (isBus) {
-    for (const sx of [-1, 1]) { const w = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.1, 9.6), glassM); w.position.set(sx * (W2 / 2 + 0.01), 2.3, -0.2); g.add(w); }
-    const fw = new THREE.Mesh(new THREE.BoxGeometry(2.3, 1.4, 0.05), glassM); fw.position.set(0, 2.2, -L2 / 2 - 0.01); g.add(fw);
-  } else {
-    const cab = new THREE.Mesh(new THREE.BoxGeometry(W2 * 0.86, 0.62, 2.3), glassM); cab.position.set(0, 1.1 + 0.31, 0.2); g.add(cab);
-    if (isTaxi) { const sign = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.22, 0.25), new THREE.MeshBasicMaterial({ color: 0xffffff })); sign.position.set(0, 1.85, 0.2); g.add(sign); }
-  }
-  const wheelG = new THREE.CylinderGeometry(0.36, 0.36, 0.3, 10), wheelM = new THREE.MeshLambertMaterial({ color: 0x111111 });
-  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
-    const w = new THREE.Mesh(wheelG, wheelM); w.rotation.z = Math.PI / 2; w.position.set(sx * W2 / 2, 0.36, sz * (L2 / 2 - (isBus ? 1.8 : 0.9))); g.add(w);
-  }
-  const tl = new THREE.MeshBasicMaterial({ color: 0xff2a2a }), hl = new THREE.MeshBasicMaterial({ color: 0xfff6d0 });
-  for (const sx of [-1, 1]) {
-    const t = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.18, 0.06), tl); t.position.set(sx * (W2 / 2 - 0.3), 0.9, L2 / 2 + 0.02); g.add(t);
-    const h = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.18, 0.06), hl); h.position.set(sx * (W2 / 2 - 0.3), 0.8, -L2 / 2 - 0.02); g.add(h);
-  }
-  g.userData = { halfL: L2 / 2, halfW: W2 / 2 };
-  return g;
-}
-const LANES_FWD = [LANE_W * 0.5, LANE_W * 1.5, LANE_W * 2.5], LANES_BACK = [-LANE_W * 0.5, -LANE_W * 1.5, -LANE_W * 2.5];
-function spawnCar(c, nearS, initial) {
-  c.dir = Math.random() < 0.55 ? 1 : -1;
-  const lanes = c.dir > 0 ? LANES_FWD : LANES_BACK;
-  c.lane = lanes[Math.floor(Math.random() * 3)];
-  c.vmax = c.kind === 'bus' ? 9 + Math.random() * 3 : 11 + Math.random() * 7;
-  c.v = c.vmax;
-  if (initial) c.s = 40 + Math.random() * (TOTAL - 80);
-  else c.s = nearS + 220 + Math.random() * 280;
-  c.hitCd = 0;
-  c.active = c.s < TOTAL - 40;          // 快到終點時不再生車，避免車子突然出現在面前
-  c.mesh.visible = c.active;
-}
-function buildTraffic() {
-  for (let i = 0; i < TRAFFIC_COUNT; i++) {
-    const kind = i % 9 === 0 ? 'bus' : (Math.random() < 0.3 ? 'taxi' : 'car');
-    const c = { kind, mesh: makeCar(kind) };
-    spawnCar(c, 0, true);
-    if (c.dir > 0 && c.s < 60 && Math.abs(c.lane - LANE_W * 1.5) < 2) c.s += 120;
-    scene.add(c.mesh); TRAFFIC.push(c);
-  }
-}
-function updateTraffic(dt) {
-  for (const c of TRAFFIC) {
-    if (!c.active) continue;
-    // 跟車：同車道前方有車就減速
-    let target = c.vmax;
-    for (const o of TRAFFIC) {
-      if (o === c || !o.active || o.lane !== c.lane) continue;
-      const gap = (o.s - c.s) * c.dir;
-      if (gap > 0 && gap < 16 + c.mesh.userData.halfL + o.mesh.userData.halfL) target = Math.min(target, o.v * 0.9);
-    }
-    // 玩家在前方同車道也會減速
-    const pg = (car.s - c.s) * c.dir;
-    if (pg > 0 && pg < 14 && Math.abs(car.lat - c.lane) < 2.2) target = Math.min(target, Math.max(0, car.speed * 0.8));
-    c.v += Math.max(-8 * dt, Math.min(3 * dt, target - c.v));
-    c.s += c.v * c.dir * dt;
-    c.hitCd = Math.max(0, c.hitCd - dt);
-    if (c.s > TOTAL + 5 || c.s < -5 || (c.s - car.s) < -160 || (c.s - car.s) > 700) spawnCar(c, car.s, false);
-    const p = pos(c.s, c.lane);
-    c.mesh.position.set(p.x, 0, p.z);
-    c.mesh.rotation.y = -(p.p.h + (c.dir < 0 ? Math.PI : 0));
-    c.wx = p.x; c.wz = p.z; c.hx = p.p.dx * c.dir; c.hz = p.p.dz * c.dir;
-  }
-}
-
-/* ---------------- 玩家車輛 ---------------- */
-const car = { x: 0, z: 0, h: 0, speed: 0, steer: 0, s: 0, lat: 0, curbCd: 0 };
-function resetCar() {
-  const p = pos(12, LANE_W * 1.5);
-  car.x = p.x; car.z = p.z; car.h = p.p.h; car.speed = 0; car.steer = 0; car.s = 12; car.lat = LANE_W * 1.5; car.curbCd = 0;
-}
-const keys = {}; const touch = { L: false, R: false, B: false, G: false };
-addEventListener('keydown', e => { keys[e.code] = true; if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault(); });
-addEventListener('keyup', e => { keys[e.code] = false; });
-function updateCar(dt) {
-  const gas = keys.ArrowUp || keys.KeyW || touch.G;
-  const brake = keys.ArrowDown || keys.KeyS || keys.Space || touch.B;
-  let steerIn = 0;
-  if (keys.ArrowLeft || keys.KeyA || touch.L) steerIn -= 1;
-  if (keys.ArrowRight || keys.KeyD || touch.R) steerIn += 1;
-  car.steer += (steerIn - car.steer) * Math.min(1, (steerIn ? 4 : 6) * dt);
-
-  if (gas) car.speed += (car.speed < 0 ? 16 : 7.5 * (1 - car.speed / (MAX_SPEED * 1.05))) * dt;
-  else if (brake) car.speed += (car.speed > 0.3 ? -15 : -4.5) * dt;      // 停住後再按 = 倒車
-  else car.speed -= Math.sign(car.speed) * Math.min(Math.abs(car.speed), (0.8 + 0.004 * car.speed * car.speed) * dt);
-  car.speed = Math.max(-7, Math.min(MAX_SPEED, car.speed));
-
-  const v = car.speed, grip = Math.min(1, Math.abs(v) / 4);
-  const yaw = car.steer * (1.25 / (1 + Math.abs(v) / 16)) * grip * Math.sign(v || 1);
-  car.h += yaw * dt;
-  car.x += Math.sin(car.h) * v * dt; car.z += -Math.cos(car.h) * v * dt;
-
-  const pr = project(car.x, car.z);
-  car.s = pr.s; car.lat = pr.lat;
-  car.curbCd = Math.max(0, car.curbCd - dt);
-  const LIM = ROAD_HALF + 3.6;
-  if (Math.abs(pr.lat) > LIM) {     // 撞到路緣：推回來並減速
-    const back = pos(pr.s, Math.sign(pr.lat) * LIM);
-    car.x = back.x; car.z = back.z;
-    if (car.curbCd <= 0 && Math.abs(car.speed) > 6) { toast('撞到路邊！'); shake = 0.35; car.curbCd = 1; }
-    car.speed *= Math.pow(0.15, dt);
-  }
-  if (car.s < 1 && car.speed < 0) car.speed = 0;
-  // 與車流碰撞
-  for (const c of TRAFFIC) {
-    if (!c.active) continue;
-    const rx = car.x - c.wx, rz = car.z - c.wz;
-    const f = rx * c.hx + rz * c.hz, r = rx * -c.hz + rz * c.hx;
-    if (Math.abs(f) < c.mesh.userData.halfL + 2.1 && Math.abs(r) < c.mesh.userData.halfW + 0.95 && c.hitCd <= 0) {
-      c.hitCd = 1.5; crashes++;
-      document.getElementById('crashes').textContent = crashes;
-      const rel = car.speed;
-      car.speed = -Math.sign(rel || 1) * Math.min(4, Math.abs(rel) * 0.3);
-      c.v *= 0.3;
-      const fl = document.getElementById('flash'); fl.style.opacity = 1; setTimeout(() => fl.style.opacity = 0, 220);
-      shake = 0.6; toast('碰撞！−200 分');
-    }
-  }
-}
-
-/* ---------------- 小地圖 ---------------- */
-const mm = document.getElementById('minimap'), mctx = mm.getContext('2d');
-let MM = null;
-function setupMinimap() {
-  let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
-  PATH.forEach(p => { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); z0 = Math.min(z0, p.z); z1 = Math.max(z1, p.z); });
-  const p101 = L(LANDMARKS.t101.lat, LANDMARKS.t101.lng); x1 = Math.max(x1, p101.x); z1 = Math.max(z1, p101.z);
-  const pad = 14, sc = Math.min((170 - pad * 2) / (x1 - x0), (170 - pad * 2) / (z1 - z0));
-  MM = { sc, ox: pad - x0 * sc + ((170 - pad * 2) - (x1 - x0) * sc) / 2, oz: pad - z0 * sc + ((170 - pad * 2) - (z1 - z0) * sc) / 2, p101 };
-}
-function drawMinimap() {
-  const m = MM, X = x => m.ox + x * m.sc, Z = z => m.oz + z * m.sc;
-  mctx.clearRect(0, 0, 170, 170);
-  mctx.lineCap = 'round'; mctx.lineJoin = 'round';
-  mctx.strokeStyle = 'rgba(255,255,255,.35)'; mctx.lineWidth = 7; mctx.beginPath();
-  PATH.forEach((p, i) => i ? mctx.lineTo(X(p.x), Z(p.z)) : mctx.moveTo(X(p.x), Z(p.z))); mctx.stroke();
-  mctx.strokeStyle = '#e8c468'; mctx.lineWidth = 3; mctx.beginPath();
-  PATH.forEach((p, i) => i ? mctx.lineTo(X(p.x), Z(p.z)) : mctx.moveTo(X(p.x), Z(p.z))); mctx.stroke();
-  for (const b of BOARDS) { mctx.fillStyle = b.seen ? '#5fe08f' : '#ffffff'; mctx.fillRect(X(b.x) - 2.5, Z(b.z) - 2.5, 5, 5); }
-  mctx.font = '16px sans-serif'; mctx.textAlign = 'center'; mctx.fillText('🏁', X(m.p101.x), Z(m.p101.z) + 6);
-  mctx.save(); mctx.translate(X(car.x), Z(car.z)); mctx.rotate(car.h);
-  mctx.fillStyle = '#ff5a4f'; mctx.beginPath(); mctx.moveTo(0, -7); mctx.lineTo(5, 5); mctx.lineTo(-5, 5); mctx.closePath(); mctx.fill();
-  mctx.restore();
-}
-
-/* ---------------- 遊戲流程 ---------------- */
-let state = 'loading', startTime = 0, elapsed = 0, crashes = 0, boardsSeen = 0, shake = 0, countT = 0;
 function toast(msg) {
   const t = document.getElementById('toast'); t.textContent = msg; t.style.opacity = 1;
-  clearTimeout(t._h); t._h = setTimeout(() => t.style.opacity = 0, 1400);
+  clearTimeout(t._h); t._h = setTimeout(() => t.style.opacity = 0, 1500);
 }
+
+/* ---------------- 流程 ---------------- */
 function startRace() {
-  resetCar(); crashes = 0; boardsSeen = 0; elapsed = 0;
-  BOARDS.forEach(b => b.seen = false);
-  TRAFFIC.forEach(c => { spawnCar(c, 0, true); if (c.s < 70 && c.dir > 0) c.s += 150; });
-  document.getElementById('boards').textContent = 0; document.getElementById('crashes').textContent = 0;
+  s = 0; lane = 0; laneTarget = 0; speed = 0; boardsSeen = 0; coneHits = 0; elapsed = 0;
+  boards.forEach(b => b.seen = false); stationMarks.forEach((st, i) => st.hit = i === 0);
+  obstacles.forEach(o => { if (o.hit) { o.hit = false; map.append(o.mk); } });
+  document.getElementById('boards').textContent = 0;
   document.getElementById('startScreen').classList.add('hidden');
   document.getElementById('resultScreen').classList.add('hidden');
-  state = 'count'; countT = 3.2;
-  canvas.focus && canvas.focus();
+  placeCamera();
+  startTime = performance.now(); state = 'play';
 }
 let qIndex = 0, correct = 0, raceTime = 0;
-let finT = 0;
 function finishRace() {
-  state = 'finish'; raceTime = elapsed; finT = 0;
-  document.getElementById('guide').style.display = 'none';
-  toast('🏁 抵達台北101！準備答題');
-}
-function openQuiz() {
-  state = 'quiz'; qIndex = 0; correct = 0;
+  state = 'quiz'; raceTime = elapsed; qIndex = 0; correct = 0;
   document.getElementById('quizScreen').classList.remove('hidden'); showQuestion();
 }
 function showQuestion() {
@@ -765,21 +309,21 @@ function showQuestion() {
     box.appendChild(b);
   });
 }
-function calcScore() { return Math.max(0, Math.round(correct * 1000 - raceTime * 5 - crashes * 200)); }
+function calcScore() { return Math.max(0, Math.round(correct * 1000 - raceTime * 10 - coneHits * 200)); }
 function showResult() {
   state = 'result';
   document.getElementById('quizScreen').classList.add('hidden');
   document.getElementById('resultScreen').classList.remove('hidden');
   document.getElementById('finalScore').textContent = calcScore() + ' 分';
   document.getElementById('resultDetail').innerHTML =
-    `答對 <b>${correct}/${BOND.facts.length}</b> 題（每題 +1000）<br>時間 ${raceTime.toFixed(1)} 秒（每秒 −5）<br>碰撞 ${crashes} 次（每次 −200）`;
+    `答對 <b>${correct}/${BOND.facts.length}</b> 題（每題 +1000）<br>時間 ${raceTime.toFixed(1)} 秒（每秒 −10）<br>撞 🚧 ${coneHits} 次（每次 −200）`;
   document.getElementById('nameBox').classList.remove('hidden'); renderLB();
 }
 function loadLB() { try { return JSON.parse(localStorage.getItem(LB_KEY)) || []; } catch (e) { return []; } }
 function renderLB() {
   const lb = loadLB().sort((a, b) => b.score - a.score).slice(0, 10);
   document.getElementById('lb').innerHTML = '<tr><th>#</th><th>名字</th><th>分數</th><th>答對</th><th>秒</th></tr>' +
-    lb.map((r, i) => `<tr><td>${i + 1}</td><td>${String(r.name).replace(/</g, '&lt;')}</td><td>${r.score}</td><td>${r.correct}</td><td>${r.time}</td></tr>`).join('');
+    lb.map((r, i) => `<tr><td>${i + 1}</td><td>${r.name}</td><td>${r.score}</td><td>${r.correct}</td><td>${r.time}</td></tr>`).join('');
 }
 document.getElementById('saveBtn').onclick = () => {
   const name = document.getElementById('playerName').value.trim() || '匿名';
@@ -790,88 +334,22 @@ document.getElementById('saveBtn').onclick = () => {
 document.getElementById('startBtn').onclick = startRace;
 document.getElementById('againBtn').onclick = startRace;
 
-// 手機按鈕
-if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+/* ---------------- 操控 ---------------- */
+addEventListener('keydown', e => { keys[e.code] = true; if (e.code === 'Space') e.preventDefault(); });
+addEventListener('keyup', e => { keys[e.code] = false; });
+if ('ontouchstart' in window) {
   document.getElementById('controls').style.display = 'block';
-  for (const [id, k] of [['cL', 'L'], ['cR', 'R'], ['cB', 'B'], ['cG', 'G']]) {
+  const bind = (id, on, off) => {
     const el = document.getElementById(id);
-    const on = e => { e.preventDefault(); touch[k] = true; el.classList.add('on'); };
-    const off = e => { e.preventDefault(); touch[k] = false; el.classList.remove('on'); };
-    el.addEventListener('touchstart', on, { passive: false }); el.addEventListener('touchend', off, { passive: false });
-    el.addEventListener('touchcancel', off); el.addEventListener('pointerdown', on); el.addEventListener('pointerup', off); el.addEventListener('pointerleave', off);
-  }
+    el.addEventListener('touchstart', e => { e.preventDefault(); on(); }, { passive: false });
+    el.addEventListener('touchend', e => { e.preventDefault(); off(); }, { passive: false });
+    el.addEventListener('touchcancel', off);
+  };
+  bind('tL', () => touchSteer = -1, () => touchSteer = 0);
+  bind('tR', () => touchSteer = 1, () => touchSteer = 0);
+  bind('tB', () => touchBrake = true, () => touchBrake = false);
 }
-
-/* ---------------- 主迴圈 ---------------- */
-let last = performance.now();
-function frame(now) {
-  requestAnimationFrame(frame);
-  const dt = Math.min((now - last) / 1000, 0.05); last = now;
-  if (state === 'count') {
-    countT -= dt;
-    const el = document.getElementById('count'); el.style.display = 'block';
-    el.textContent = countT > 2.2 ? '3' : countT > 1.2 ? '2' : countT > 0.2 ? '1' : 'GO!';
-    if (countT <= -0.4) { el.style.display = 'none'; state = 'play'; startTime = performance.now(); }
-  }
-  if (state === 'play' || state === 'count') updateTraffic(dt);
-  if (state === 'play') {
-    updateCar(dt);
-    elapsed = (performance.now() - startTime) / 1000;
-    for (const b of BOARDS) if (!b.seen && car.s > b.s + 5) { b.seen = true; boardsSeen++; document.getElementById('boards').textContent = boardsSeen; }
-    const g = document.getElementById('guide'), toTurn = TURN_S - car.s;
-    if (toTurn > 0 && toTurn < 260) { g.style.display = 'block'; g.textContent = `↱ ${Math.round(toTurn)} m 後右轉 市府路`; }
-    else if (car.s > TURN_S + 30 && TOTAL - car.s < 200) { g.style.display = 'block'; g.textContent = '🏁 終點就在前方！'; }
-    else {
-      const d = at(car.s), fwd = Math.sin(car.h) * d.dx + -Math.cos(car.h) * d.dz;
-      if (fwd < -0.3 && Math.abs(car.speed) > 2) { g.style.display = 'block'; g.textContent = '⚠ 方向錯誤，請迴轉'; }
-      else g.style.display = 'none';
-    }
-    if (car.s >= TOTAL - 8) finishRace();
-  }
-  if (state === 'finish') {
-    finT += dt;
-    car.speed = Math.max(0, car.speed - 14 * dt);
-    car.x += Math.sin(car.h) * car.speed * dt; car.z += -Math.cos(car.h) * car.speed * dt;
-    if (finT > 3.2) openQuiz();
-  }
-  // 鏡頭：駕駛座視角
-  shake = Math.max(0, shake - dt);
-  const sx = (Math.random() - 0.5) * shake * 0.5, sy = (Math.random() - 0.5) * shake * 0.4;
-  const fx = Math.sin(car.h), fz = -Math.cos(car.h);
-  camera.position.set(car.x + fx * 0.3 + sx, 1.25 + sy + Math.sin(now / 90) * 0.012 * Math.min(1, car.speed / 10), car.z + fz * 0.3);
-  if (state === 'finish' || state === 'quiz' || state === 'result') {
-    const t = Math.min(1, finT / 1.8), e = t * t * (3 - 2 * t), T = L(LANDMARKS.t101.lat, LANDMARKS.t101.lng);
-    camera.lookAt(car.x + fx * 20 + (T.x - car.x - fx * 20) * e, 1.15 + 260 * e, car.z + fz * 20 + (T.z - car.z - fz * 20) * e);
-  } else {
-    camera.lookAt(car.x + fx * 20, 1.15, car.z + fz * 20);
-    camera.rotateZ(-car.steer * 0.025);
-  }
-  const fov = 72 + Math.max(0, car.speed) * 0.35;
-  if (Math.abs(camera.fov - fov) > 0.2) { camera.fov = fov; camera.updateProjectionMatrix(); }
-  // 儀表
-  document.getElementById('wheel').style.transform = `translateX(-50%) rotate(${car.steer * 110}deg)`;
-  document.getElementById('spd').textContent = Math.round(Math.abs(car.speed) * 3.6);
-  document.getElementById('gear').textContent = car.speed < -0.3 ? 'R' : 'D';
-  document.getElementById('time').textContent = elapsed.toFixed(1);
-  document.getElementById('distV').textContent = Math.max(0, (TOTAL - car.s) / 1000).toFixed(2);
-  if (MM) drawMinimap();
-  renderer.render(scene, camera);
-}
-
-/* ---------------- 啟動 ---------------- */
-setTimeout(() => {
-  try {
-    planBoards();
-    const src = buildCity();
-    buildRoad(); build101(); buildSYS(); buildBoards(); buildGantries(); buildTraffic();
-    setupMinimap(); resetCar();
-    document.getElementById('boardsTotal').textContent = BOND.facts.length;
-    setMsg(`地圖來源：${src}・全程約 ${(TOTAL / 1000).toFixed(1)} 公里`);
-    const btn = document.getElementById('startBtn'); btn.disabled = false; btn.textContent = '🏁 出發';
-    state = 'ready';
-  } catch (e) { console.error(e); setMsg('建造城市時發生錯誤：' + e.message); }
-  requestAnimationFrame(frame);
-}, 30);
+init();
 </script>
 </body>
 </html>
