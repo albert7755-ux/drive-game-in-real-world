@@ -50,6 +50,13 @@
   input{font-size:17px;padding:10px 14px;border-radius:10px;border:2px solid var(--gold);background:rgba(255,255,255,.08);color:#fff;width:220px;text-align:center;}
   .hidden{display:none !important;} .score{font-size:44px;color:var(--gold);font-weight:800;margin:6px 0;}
   #loadMsg{font-size:13px;color:#9fb3cc;margin-top:10px;}
+  #myName{margin-top:14px;}
+  .lbWrap{width:100%;max-width:440px;margin-top:14px;}
+  .lbHead{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;color:var(--gold);}
+  .lbHead span{font-size:12px;color:#9fb3cc;}
+  tr.me td{color:var(--gold);font-weight:700;}
+  .note{font-size:14px;margin-top:8px;} .note.ok{color:#7ee0a0;} .note.err{color:#ffb3b3;}
+  #myRank{font-size:16px;margin-top:8px;color:#fff;} #myRank b{color:var(--gold);font-size:22px;}
 </style>
 </head>
 <body>
@@ -96,8 +103,10 @@
     <span><kbd>←</kbd><kbd>→</kbd></span><span>方向盤</span>
   </div>
   <p style="font-size:13px;margin-top:8px">手機：左下轉向、右下煞車與油門</p>
+  <input id="myName" maxlength="12" placeholder="輸入名字（上排行榜用）">
   <button class="btn" id="startBtn" disabled>城市建造中…</button>
   <div id="loadMsg"></div>
+  <div class="lbWrap"><div class="lbHead">🏆 排行榜前 5 名 <span id="lbStatusStart"></span></div><table id="lbStart"></table></div>
 </div>
 
 <div id="quizScreen" class="screen hidden">
@@ -109,7 +118,8 @@
   <h2>🏁 抵達台北 101</h2>
   <div class="score" id="finalScore"></div><p id="resultDetail"></p>
   <div id="nameBox"><input id="playerName" maxlength="12" placeholder="輸入名字上榜"><br><button class="btn" id="saveBtn">登錄排行榜</button></div>
-  <table id="lb"></table>
+  <div class="note" id="saveNote"></div><div id="myRank" class="hidden"></div>
+  <div class="lbWrap"><div class="lbHead">🏆 全員排行榜 <span id="lbStatus"></span></div><table id="lb"></table></div>
   <button class="btn ghost" id="againBtn">再跑一次</button>
 </div>
 
@@ -156,7 +166,7 @@ const LANDMARKS = {
 const LANES_PER_SIDE = 4;      // 單向幾線道（忠孝東路單向 4 線道），改這個數字路就會變寬
 const LANE_W = 3.5;            // 每條車道寬（公尺）
 const ROAD_HALF = LANES_PER_SIDE * LANE_W + 0.5;   // 路寬一半，依車道數自動計算
-const MAX_SPEED = 45;          // 公尺/秒（約 126 km/h）
+const MAX_SPEED = 45;          // 公尺/秒（約 162 km/h）
 const TRAFFIC_COUNT = 34;      // 路上車輛數
 const RAMP_COUNT = 6;          // 跳台數量（跳台前面會有藍色加速帶）
 const LB_KEY = 'bondrace_city_lb';
@@ -892,7 +902,7 @@ function resetCar() {
   car.y = 0; car.vy = 0; car.air = false; car.airT = 0; car.prevH = 0; car.prevR = null; car.boost = 0;
 }
 const keys = {}; const touch = { L: false, R: false, B: false, G: false };
-addEventListener('keydown', e => { keys[e.code] = true; if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault(); });
+addEventListener('keydown', e => { if (e.target && e.target.tagName === 'INPUT') return; keys[e.code] = true; if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault(); });
 addEventListener('keyup', e => { keys[e.code] = false; });
 function updateCar(dt) {
   const gas = keys.ArrowUp || keys.KeyW || touch.G;
@@ -1038,26 +1048,87 @@ function showQuestion() {
 }
 function calcScore() { return Math.max(0, Math.round(correct * 1000 - raceTime * 5 - crashes * 200 + jumps * 100)); }
 function showResult() {
-  state = 'result';
+  state = 'result'; submitted = false;
   document.getElementById('quizScreen').classList.add('hidden');
   document.getElementById('resultScreen').classList.remove('hidden');
   document.getElementById('finalScore').textContent = calcScore() + ' 分';
   document.getElementById('resultDetail').innerHTML =
     `答對 <b>${correct}/${BOND.facts.length}</b> 題（每題 +1000）<br>時間 ${raceTime.toFixed(1)} 秒（每秒 −5）<br>碰撞 ${crashes} 次（每次 −200）<br>飛躍 ${jumps} 次（每次 +100）`;
-  document.getElementById('nameBox').classList.remove('hidden'); renderLB();
+  setNote('', ''); document.getElementById('myRank').classList.add('hidden');
+  const nm = getName();
+  if (nm) { document.getElementById('nameBox').classList.add('hidden'); saveScore(nm); }
+  else { document.getElementById('nameBox').classList.remove('hidden'); renderBoard(); }
 }
-function loadLB() { try { return JSON.parse(localStorage.getItem(LB_KEY)) || []; } catch (e) { return []; } }
-function renderLB() {
-  const lb = loadLB().sort((a, b) => b.score - a.score).slice(0, 10);
-  document.getElementById('lb').innerHTML = '<tr><th>#</th><th>名字</th><th>分數</th><th>答對</th><th>秒</th></tr>' +
-    lb.map((r, i) => `<tr><td>${i + 1}</td><td>${String(r.name).replace(/</g, '&lt;')}</td><td>${r.score}</td><td>${r.correct}</td><td>${r.time}</td></tr>`).join('');
+
+/* ---------------- 排行榜：有設定 Supabase 就全員共用，沒有就只存在這台裝置 ---------------- */
+const SB_URL = '__SUPABASE_URL__'.replace(/\/+$/, ''), SB_KEY = '__SUPABASE_ANON_KEY__';
+const SB_ON = /^https:\/\/.+/.test(SB_URL) && SB_KEY.length > 30 && SB_KEY.indexOf('SUPABASE') < 0;
+const BOARD_ID = String((BOND.facts[0] && BOND.facts[0].value) || 'default').slice(0, 80);   // 每檔債券各自一張排行榜
+const NAME_KEY = 'bondrace_name';
+let submitted = false, LBROWS = [];
+function lsGet(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function getName() { return document.getElementById('myName').value.replace(/\s+/g, ' ').trim().slice(0, 12); }
+function setNote(cls, t) { const n = document.getElementById('saveNote'); n.className = 'note ' + cls; n.textContent = t; }
+function esc(t) { return String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+(function () { const nm = lsGet(NAME_KEY, ''); if (nm) document.getElementById('myName').value = nm; })();
+document.getElementById('myName').addEventListener('input', () => lsSet(NAME_KEY, getName()));
+function sbHeaders(extra) { return Object.assign({ apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }, extra || {}); }
+function sbErr(status, body) {
+  const t = String(body || '');
+  if (status === 404 || t.includes('PGRST205') || t.includes('does not exist')) return '找不到資料表 race_scores，請到 Supabase 的 SQL Editor 執行 schema.sql';
+  if (status === 401) return '金鑰不正確，請檢查 Secrets 的 SUPABASE_ANON_KEY';
+  if (status === 403) return '權限被擋，請確認 schema.sql 有完整執行';
+  if (status === 400) return '成績被資料庫擋下（名字太長或數值不合理）';
+  return 'HTTP ' + status;
+}
+const LOCAL_MEM = [];   // 瀏覽器不給存檔時，至少這次開著的時候記得
+function loadLocal() { try { const v = JSON.parse(localStorage.getItem(LB_KEY)); if (Array.isArray(v)) return v; } catch (e) {} return LOCAL_MEM.slice(); }
+function saveScore(name) {
+  if (submitted) return; submitted = true;
+  lsSet(NAME_KEY, name); document.getElementById('myName').value = name;
+  const row = { board: BOARD_ID, name, score: calcScore(), correct, seconds: Math.round(raceTime * 10) / 10, crashes, jumps };
+  if (!SB_ON) {
+    LOCAL_MEM.push(row); const lb = loadLocal(); if (!lb.includes(row)) lb.push(row); try { localStorage.setItem(LB_KEY, JSON.stringify(lb)); } catch (e) {}
+    setNote('ok', '成績已存在這台裝置（排行榜尚未連線，只有你看得到）'); renderBoard(true); return;
+  }
+  setNote('', '成績上傳中…');
+  fetch(SB_URL + '/rest/v1/race_scores', { method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }), body: JSON.stringify(row) })
+    .then(r => r.ok ? null : r.text().then(t => { throw new Error(sbErr(r.status, t)); }))
+    .then(() => { setNote('ok', '成績已上排行榜 ✓'); renderBoard(true); })
+    .catch(e => { submitted = false; setNote('err', '成績沒送出去：' + (e.message || '連不上資料庫')); renderBoard(); });
+}
+function fillTable(id, rows, limit, me) {
+  document.getElementById(id).innerHTML = '<tr><th>#</th><th>名字</th><th>分數</th><th>答對</th><th>秒</th></tr>' +
+    (rows.length ? rows.slice(0, limit).map((r, i) => `<tr class="${me && r.name === me ? 'me' : ''}"><td>${i + 1}</td><td>${esc(r.name)}${me && r.name === me ? '（你）' : ''}</td><td>${r.score}</td><td>${r.correct}/${BOND.facts.length}</td><td>${Number(r.seconds).toFixed(1)}</td></tr>`).join('')
+      : '<tr><td colspan="5" style="text-align:center;color:#9fb3cc">還沒有人上榜，搶頭香！</td></tr>');
+}
+function showBoard(rows, showRank, status) {
+  const seen = {}, best = [];   // 每個名字只留最高分
+  rows.sort((a, b) => b.score - a.score || a.seconds - b.seconds).forEach(r => { if (!seen[r.name]) { seen[r.name] = 1; best.push(r); } });
+  LBROWS = best; const me = getName();
+  fillTable('lb', best, 20, me); fillTable('lbStart', best, 5, me);
+  document.getElementById('lbStatus').textContent = document.getElementById('lbStatusStart').textContent = status;
+  if (showRank && me) {
+    const i = best.findIndex(r => r.name === me), el = document.getElementById('myRank');
+    if (i >= 0) { el.innerHTML = `你目前排第 <b>${i + 1}</b> 名（共 ${best.length} 人）`; el.classList.remove('hidden'); }
+  }
+}
+function renderBoard(showRank) {
+  if (!SB_ON) { showBoard(loadLocal().filter(r => (r.board || BOARD_ID) === BOARD_ID).map(r => ({ ...r, seconds: r.seconds ?? r.time })), showRank, '僅本機'); return; }
+  const url = SB_URL + '/rest/v1/race_scores?board=eq.' + encodeURIComponent(BOARD_ID) + '&select=name,score,correct,seconds&order=score.desc,seconds.asc&limit=1000';
+  fetch(url, { headers: sbHeaders() })
+    .then(r => r.ok ? r.json() : r.text().then(t => { throw new Error(sbErr(r.status, t)); }))
+    .then(rows => showBoard(rows || [], showRank, '全員共用・' + new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })))
+    .catch(e => { document.getElementById('lbStatus').textContent = document.getElementById('lbStatusStart').textContent = '讀取失敗：' + (e.message || '連不上'); });
 }
 document.getElementById('saveBtn').onclick = () => {
-  const name = document.getElementById('playerName').value.trim() || '匿名';
-  const lb = loadLB(); lb.push({ name, score: calcScore(), correct, time: raceTime.toFixed(1) });
-  try { localStorage.setItem(LB_KEY, JSON.stringify(lb)); } catch (e) {}
-  document.getElementById('nameBox').classList.add('hidden'); renderLB();
+  const nm = document.getElementById('playerName').value.replace(/\s+/g, ' ').trim().slice(0, 12);
+  if (!nm) { setNote('err', '請先輸入名字'); return; }
+  document.getElementById('myName').value = nm;
+  document.getElementById('nameBox').classList.add('hidden'); saveScore(nm);
 };
+renderBoard();
 document.getElementById('startBtn').onclick = startRace;
 document.getElementById('againBtn').onclick = startRace;
 
