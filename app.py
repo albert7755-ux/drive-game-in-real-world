@@ -1,3 +1,5 @@
+import csv
+import io
 import json
 import math
 import re
@@ -119,5 +121,39 @@ except Exception:
     data = None   # 下載失敗就用遊戲內建街景，照樣能玩
 payload = json.dumps(data, separators=(",", ":")).replace("</", "<\\/") if data else ""
 html = html.replace("__OSM_DATA__", payload)
+
+
+# ---- 債券條件：讀 bond_settings.csv（可以用 Excel 編輯）----
+def load_bond_settings():
+    found = sorted(here.rglob("*bond_settings*.csv"))
+    if not found:
+        return None
+    raw = found[0].read_bytes()
+    text = None
+    for enc in ("utf-8-sig", "cp950", "big5"):   # Excel 存的 CSV 可能是 UTF-8 或 Big5
+        try:
+            text = raw.decode(enc)
+            break
+        except UnicodeDecodeError:
+            continue
+    if text is None:
+        return None
+    facts = []
+    for row in csv.reader(io.StringIO(text)):
+        cells = [c.strip() for c in row]
+        if len(cells) < 2 or not cells[0] or not cells[1]:
+            continue
+        if cells[0] in ("條件", "key", "KEY"):          # 跳過標題列
+            continue
+        options = [c for c in cells[2:] if c and c != cells[1]][:3]
+        facts.append({"key": cells[0], "value": cells[1], "options": options})
+    return facts if len(facts) >= 2 else None
+
+
+try:
+    bond = load_bond_settings()
+except Exception:
+    bond = None   # 設定檔有問題就用遊戲內建的預設值
+html = html.replace("__BOND_DATA__", json.dumps(bond, ensure_ascii=False).replace("</", "<\\/") if bond else "")
 
 components.html(html, height=900, scrolling=False)
