@@ -152,7 +152,7 @@ const LANDMARKS = {
   sys:  { lat: 25.04016, lng: 121.55998 },   // 國父紀念館
 };
 
-const LANES_PER_SIDE = 3;      // 單向幾線道（忠孝東路單向 4 線道），改這個數字路就會變寬
+const LANES_PER_SIDE = 4;      // 單向幾線道（忠孝東路單向 4 線道），改這個數字路就會變寬
 const LANE_W = 3.5;            // 每條車道寬（公尺）
 const ROAD_HALF = LANES_PER_SIDE * LANE_W + 0.5;   // 路寬一半，依車道數自動計算
 const MAX_SPEED = 35;          // 公尺/秒（約 126 km/h）
@@ -274,10 +274,111 @@ function windowTexture() {
   }
   const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
 }
+function makeTex(w, h, draw, repeat) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); if (repeat) t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
+}
+// 外牆 1：公寓（陽台、鐵窗、冷氣機）
+function apartmentTexture() {
+  return makeTex(128, 128, (g) => {
+    g.fillStyle = '#d9d3c7'; g.fillRect(0, 0, 128, 128);
+    for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) {
+      const X = x * 64, Y = y * 64;
+      g.fillStyle = Math.random() < 0.2 ? '#ffe9b8' : '#5d6670'; g.fillRect(X + 8, Y + 12, 48, 34);
+      g.strokeStyle = '#3b3f45'; g.lineWidth = 2;
+      for (let k = 1; k < 6; k++) { g.beginPath(); g.moveTo(X + 8 + k * 8, Y + 12); g.lineTo(X + 8 + k * 8, Y + 46); g.stroke(); }   // 鐵窗
+      g.fillStyle = '#b9b2a6'; g.fillRect(X + 4, Y + 46, 56, 8);                                // 陽台
+      if (Math.random() < 0.6) { g.fillStyle = '#eeeeee'; g.fillRect(X + 40, Y + 30, 14, 10); }  // 冷氣機
+    }
+  }, true);
+}
+// 外牆 2：玻璃帷幕（高樓）
+function glassTexture() {
+  return makeTex(128, 128, (g) => {
+    const gr = g.createLinearGradient(0, 0, 128, 128); gr.addColorStop(0, '#7fa6c4'); gr.addColorStop(1, '#3f6380');
+    g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+    g.fillStyle = '#c9d6df'; for (let x = 0; x < 128; x += 32) g.fillRect(x, 0, 3, 128); for (let y = 0; y < 128; y += 32) g.fillRect(0, y, 128, 4);
+    g.fillStyle = 'rgba(255,255,255,.16)'; g.fillRect(0, 0, 128, 40);
+  }, true);
+}
+// 一樓店面（騎樓、招牌、亮燈玻璃）
+const SHOP_NAMES = ['咖啡館', '麵包坊', '眼鏡行', '藥妝店', '小吃店', '手搖飲', '書局', '服飾店'];
+const SHOP_COLORS = ['#c0392b', '#1f6f8b', '#d68910', '#1e8449', '#7d3c98', '#2e4053', '#a04000', '#117a65'];
+function shopTexture(i) {
+  return makeTex(256, 128, (g, w, h) => {
+    g.fillStyle = '#2b2b2e'; g.fillRect(0, 0, w, h);
+    g.fillStyle = SHOP_COLORS[i]; g.fillRect(0, 0, w, 38);
+    g.fillStyle = '#fff'; g.font = 'bold 26px "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(SHOP_NAMES[i], w / 2, 20);
+    const gr = g.createLinearGradient(0, 44, 0, h); gr.addColorStop(0, '#fff3cf'); gr.addColorStop(1, '#e9b866');
+    g.fillStyle = gr; g.fillRect(8, 46, w - 16, h - 50);
+    g.fillStyle = '#2b2b2e'; for (let x = 8; x < w; x += 60) g.fillRect(x, 46, 4, h - 50);
+    g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(100, 60, 56, h - 64);   // 門
+  }, true);
+}
+// 直立招牌（台灣街景的靈魂）
+const SIGN_WORDS = ['牙醫診所', '眼鏡', '咖啡', '藥局', '牛肉麵', '補習班', '理財', '小籠包', '健身房', '火鍋'];
+const SIGN_BG = ['#c0392b', '#f1c40f', '#1f618d', '#27ae60', '#e67e22', '#8e44ad', '#16a085', '#d35400', '#2c3e50', '#b03a2e'];
+function signTex(i) {
+  return makeTex(128, 448, (g, w, h) => {
+    g.fillStyle = SIGN_BG[i]; g.fillRect(0, 0, w, h);
+    g.strokeStyle = '#fff'; g.lineWidth = 8; g.strokeRect(6, 6, w - 12, h - 12);
+    const t = SIGN_WORDS[i], n = t.length, step = Math.min(96, (h - 40) / n);
+    g.fillStyle = i === 1 ? '#222' : '#fff'; g.font = `900 ${Math.floor(step * 0.82)}px "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif`;
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let k = 0; k < n; k++) g.fillText(t[k], w / 2, h / 2 + (k - (n - 1) / 2) * step);
+  });
+}
+const CITY = { walls: null, shops: null, signs: null, tanks: [], signCount: 0, seed: 0 };
+function initCityBatches() {
+  CITY.walls = [new QuadBatch(), new QuadBatch(), new QuadBatch()];
+  CITY.shops = SHOP_NAMES.map(() => new QuadBatch());
+  CITY.signs = SIGN_WORDS.map(() => new QuadBatch());
+}
+function finishCityBatches() {
+  const wt = [windowTexture(), apartmentTexture(), glassTexture()];
+  CITY.walls.forEach((b, i) => scene.add(b.mesh(new THREE.MeshLambertMaterial({ map: wt[i], vertexColors: true }))));
+  CITY.shops.forEach((b, i) => scene.add(b.mesh(new THREE.MeshBasicMaterial({ map: shopTexture(i) }))));
+  CITY.signs.forEach((b, i) => scene.add(b.mesh(new THREE.MeshBasicMaterial({ map: signTex(i), side: THREE.DoubleSide }))));
+  if (CITY.tanks.length) {
+    const im = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.9, 0.9, 1.7, 10), new THREE.MeshLambertMaterial({ color: 0xc8ced6 }), CITY.tanks.length);
+    const m = new THREE.Matrix4();
+    CITY.tanks.forEach((p, i) => { m.makeTranslation(p[0], p[1], p[2]); im.setMatrixAt(i, m); });
+    scene.add(im);
+  }
+}
+// 面向比賽道路的外牆：加上一樓店面和直立招牌
+function decorateWall(a, b, l, h) {
+  if (l < 4 || h < 6) return;
+  const mx = (a.x + b.x) / 2, mz = (a.z + b.z) / 2, pc = project(mx, mz);
+  if (pc.d > 45 || pc.s < 2 || pc.s > TOTAL - 2) return;
+  const ex = (b.x - a.x) / l, ez = (b.z - a.z) / l, d = at(pc.s);
+  if (Math.abs(ex * d.dx + ez * d.dz) < 0.75) return;          // 要跟馬路平行
+  const nx = -ez, nz = ex, c = pos(pc.s, 0);
+  if ((c.x - mx) * nx + (c.z - mz) * nz <= 0) return;          // 要面向馬路
+  const k = Math.floor(hash(++CITY.seed) * SHOP_NAMES.length), o = 0.06;
+  const top = Math.min(4.2, h - 0.5);
+  CITY.shops[k].quad([a.x + nx * o, 0.15, a.z + nz * o], [b.x + nx * o, 0.15, b.z + nz * o], [b.x + nx * o, top, b.z + nz * o], [a.x + nx * o, top, a.z + nz * o], [1, 1, 1],
+    [[0, 0], [l / 8, 0], [l / 8, 1], [0, 1]]);
+  if (h < 11) return;
+  const fx = -d.dx, fz = -d.dz, ux = fz, uz = -fx;              // 招牌正面朝向迎面而來的駕駛
+  for (let t = 3; t < l - 2 && CITY.signCount < 340; t += 8.5) {
+    if (hash(++CITY.seed) > 0.6) continue;
+    const px = a.x + ex * t + nx * 1.0, pz = a.z + ez * t + nz * 1.0, y0 = 4.8, y1 = 4.8 + 4.4 + hash(CITY.seed * 3) * 2;
+    const i = Math.floor(hash(CITY.seed * 7) * SIGN_WORDS.length), hw = 0.65;
+    CITY.signs[i].quad([px - ux * hw, y0, pz - uz * hw], [px + ux * hw, y0, pz + uz * hw], [px + ux * hw, y1, pz + uz * hw], [px - ux * hw, y1, pz - uz * hw], [1, 1, 1]);
+    CITY.signCount++;
+  }
+}
 const PALETTE = [[0.86, 0.84, 0.80], [0.78, 0.76, 0.72], [0.70, 0.72, 0.75], [0.88, 0.82, 0.74], [0.62, 0.64, 0.66], [0.80, 0.70, 0.62], [0.74, 0.80, 0.82]];
 
 // 由多邊形蓋大樓（外牆＋屋頂），pts 為 [{x,z}]
 function addBuilding(walls, roofs, pts, h, col) {
+  CITY.seed++;
+  const style = h > 45 ? (hash(CITY.seed) < 0.75 ? 2 : 0) : (hash(CITY.seed * 1.7) < 0.5 ? 1 : 0);
+  walls = CITY.walls ? CITY.walls[style] : walls;
+  if (style === 2) col = [0.9, 0.95, 1];
   let area = 0;
   for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; area += a.x * b.z - b.x * a.z; }
   if (Math.abs(area) < 8) return;
@@ -289,6 +390,7 @@ function addBuilding(walls, roofs, pts, h, col) {
     if (l < 0.05) continue;
     const u2 = u + l / 4.2;
     walls.quad([a.x, 0, a.z], [b.x, 0, b.z], [b.x, h, b.z], [a.x, h, a.z], col, [[u, 0], [u2, 0], [u2, vTop], [u, vTop]]);
+    decorateWall(a, b, l, h);
     u = u2;
   }
   const v2 = pts.map(p => new THREE.Vector2(p.x, p.z));
@@ -300,6 +402,11 @@ function addBuilding(walls, roofs, pts, h, col) {
     const cross = (B.x - A.x) * (C.z - A.z) - (B.z - A.z) * (C.x - A.x);
     if (cross < 0) roofs.tri([A.x, h, A.z], [B.x, h, B.z], [C.x, h, C.z], rc);
     else roofs.tri([A.x, h, A.z], [C.x, h, C.z], [B.x, h, B.z], rc);
+  }
+  // 屋頂水塔（台北公寓標配）
+  if (h < 40 && CITY.tanks.length < 220 && hash(CITY.seed * 2.3) < 0.7) {
+    let cx = 0, cz = 0; pts.forEach(p => { cx += p.x; cz += p.z; }); cx /= pts.length; cz /= pts.length;
+    if (project(cx, cz).d < 90) CITY.tanks.push([cx, h + 0.85, cz]);
   }
 }
 function hash(n) { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
@@ -322,7 +429,8 @@ function nearLandmark(x, z) {
 
 function buildCity() {
   const osm = readOSM();
-  const walls = new QuadBatch(), roofs = new QuadBatch(), roads = new QuadBatch();
+  initCityBatches();
+  const walls = null, roofs = new QuadBatch(), roads = new QuadBatch();
   const CLEAR = ROAD_HALF + 4.5;   // 比賽道路兩側淨空
   let count = 0;
   if (osm) {
@@ -385,7 +493,7 @@ function buildCity() {
       }
     }
   }
-  scene.add(walls.mesh(new THREE.MeshLambertMaterial({ map: windowTexture(), vertexColors: true })));
+  finishCityBatches();
   scene.add(roofs.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })));
   scene.add(roads.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })));
   return osm ? 'OpenStreetMap 真實街道' : '內建街景';
@@ -966,7 +1074,7 @@ setTimeout(() => {
     document.getElementById('nBoards').textContent = BOND.facts.length;
     setupMinimap(); resetCar();
     document.getElementById('boardsTotal').textContent = BOND.facts.length;
-    setMsg(`地圖來源：${src}・全程約 ${(TOTAL / 1000).toFixed(1)} 公里`);
+    setMsg(`📍 地圖來源：${src}・全程約 ${(TOTAL / 1000).toFixed(1)} 公里`);
     const btn = document.getElementById('startBtn'); btn.disabled = false; btn.textContent = '🏁 出發';
     state = 'ready';
   } catch (e) { console.error(e); setMsg('建造城市時發生錯誤：' + e.message); }
