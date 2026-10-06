@@ -106,6 +106,34 @@ def load_bond_settings():
     return facts if len(facts) >= 2 else None
 
 
+# ---- 指定店家：讀 shops.csv（店名、緯度、經度、招牌顏色）----
+def read_csv_rows(pattern):
+    found = sorted(here.rglob(pattern))
+    if not found:
+        return []
+    raw = found[0].read_bytes()
+    for enc in ("utf-8-sig", "cp950", "big5"):
+        try:
+            return [[c.strip() for c in row] for row in csv.reader(io.StringIO(raw.decode(enc)))]
+        except UnicodeDecodeError:
+            continue
+    return []
+
+
+def load_shops():
+    shops = []
+    for cells in read_csv_rows("*shops*.csv"):
+        if len(cells) < 3 or not cells[0] or cells[0] in ("店名", "name"):
+            continue
+        try:
+            lat, lng = float(cells[1]), float(cells[2])
+        except ValueError:
+            continue
+        color = cells[3] if len(cells) > 3 and re.fullmatch(r"#[0-9a-fA-F]{6}", cells[3] or "") else ""
+        shops.append({"name": cells[0], "lat": lat, "lng": lng, "color": color})
+    return shops
+
+
 # ---- 組合遊戲頁面 ----
 found = sorted(here.rglob("*bond_race_city*.html"))
 if not found:
@@ -121,6 +149,11 @@ try:
     bond = load_bond_settings()
 except Exception:
     bond = None   # 設定檔有問題就用遊戲內建的預設值
+try:
+    shops = load_shops()
+except Exception:
+    shops = []
+html = html.replace("__SHOP_DATA__", json.dumps(shops, ensure_ascii=False).replace("</", "<\\/"))
 html = html.replace("__BOND_DATA__", json.dumps(bond, ensure_ascii=False).replace("</", "<\\/") if bond else "")
 
 components.html(html, height=900, scrolling=False)
