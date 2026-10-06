@@ -116,6 +116,7 @@
 <!-- 真實街道資料：由 app.py 從 OpenStreetMap 下載後放進來；沒有資料時遊戲會自動用內建街景 -->
 <script id="osmData" type="application/json">__OSM_DATA__</script>
 <script id="bondData" type="application/json">__BOND_DATA__</script>
+<script id="shopData" type="application/json">__SHOP_DATA__</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 /* =========================================================
@@ -330,13 +331,76 @@ function signTex(i) {
     for (let k = 0; k < n; k++) g.fillText(t[k], w / 2, h / 2 + (k - (n - 1) / 2) * step);
   });
 }
-const CITY = { walls: null, shops: null, signs: null, tanks: [], signCount: 0, seed: 0 };
+const CITY = { walls: null, shops: null, signs: null, tanks: [], signCount: 0, seed: 0, faces: [] };
 function initCityBatches() {
   CITY.walls = [new QuadBatch(), new QuadBatch(), new QuadBatch()];
   CITY.shops = SHOP_NAMES.map(() => new QuadBatch());
   CITY.signs = SIGN_WORDS.map(() => new QuadBatch());
 }
+// ---- 指定店家（shops.csv）：把真實店名掛到最近的臨街店面上 ----
+function readShops() {
+  try { const d = JSON.parse(document.getElementById('shopData').textContent); return Array.isArray(d) ? d : []; } catch (e) { return []; }
+}
+function customShopTexture(name, color) {
+  return makeTex(512, 128, (g, w, h) => {
+    g.fillStyle = '#26262a'; g.fillRect(0, 0, w, h);
+    g.fillStyle = color; g.fillRect(0, 0, w, 44);
+    g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    fitFont(g, name, w - 24, 34, '900'); g.fillText(name, w / 2, 23);
+    const gr = g.createLinearGradient(0, 50, 0, h); gr.addColorStop(0, '#fff6dc'); gr.addColorStop(1, '#eac27a');
+    g.fillStyle = gr; g.fillRect(8, 52, w - 16, h - 56);
+    g.fillStyle = '#26262a'; for (let x = 8; x < w; x += 84) g.fillRect(x, 52, 4, h - 56);
+    g.fillStyle = color; g.globalAlpha = 0.85; g.fillRect(w / 2 - 34, 66, 68, h - 70); g.globalAlpha = 1;   // 門
+  });
+}
+function customSignTexture(name, color) {
+  const t = name.replace(/\s+/g, '').slice(0, 6);
+  return makeTex(128, 512, (g, w, h) => {
+    g.fillStyle = color; g.fillRect(0, 0, w, h);
+    g.strokeStyle = '#fff'; g.lineWidth = 8; g.strokeRect(6, 6, w - 12, h - 12);
+    const n = t.length, step = Math.min(96, (h - 40) / n);
+    g.fillStyle = '#fff'; g.font = `900 ${Math.floor(step * 0.8)}px "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif`;
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let k = 0; k < n; k++) g.fillText(t[k], w / 2, h / 2 + (k - (n - 1) / 2) * step);
+  });
+}
+function placeCustomShops() {
+  // 每家店找最近的臨街外牆；同一面牆有好幾家就平分，整面牆換成指定店面
+  const groups = new Map();
+  for (const sh of readShops()) {
+    if (!sh.name || !isFinite(sh.lat) || !isFinite(sh.lng)) continue;
+    const P = L(sh.lat, sh.lng); let best = null;
+    for (const f of CITY.faces) {
+      const t = Math.max(0, Math.min(f.l, (P.x - f.a.x) * f.ex + (P.z - f.a.z) * f.ez));
+      const dist = Math.hypot(P.x - (f.a.x + f.ex * t), P.z - (f.a.z + f.ez * t));
+      if (!best || dist < best.dist) best = { f, t, dist };
+    }
+    if (!best || best.dist > 35) { console.warn('找不到臨街店面：', sh.name); continue; }
+    if (!groups.has(best.f)) groups.set(best.f, []);
+    groups.get(best.f).push({ sh, t: best.t });
+  }
+  for (const [f, items] of groups) {
+    items.sort((a, b) => a.t - b.t);
+    let segStart = 0, segLen = f.l;
+    if (f.l > 45) { const c = items.reduce((m, it) => m + it.t, 0) / items.length; segLen = Math.min(f.l, 14 * items.length); segStart = Math.max(0, Math.min(f.l - segLen, c - segLen / 2)); }
+    const each = segLen / items.length, o = 0.1, top = Math.min(4.6, f.h - 0.5);
+    items.forEach((it, i) => {
+      const color = it.sh.color || '#1f4e79', t0 = segStart + each * i;
+      const A = { x: f.a.x + f.ex * t0 + f.nx * o, z: f.a.z + f.ez * t0 + f.nz * o }, B = { x: A.x + f.ex * each, z: A.z + f.ez * each };
+      const q = new QuadBatch();
+      q.quad([A.x, 0.15, A.z], [B.x, 0.15, B.z], [B.x, top, B.z], [A.x, top, A.z], [1, 1, 1]);
+      scene.add(q.mesh(new THREE.MeshBasicMaterial({ map: customShopTexture(it.sh.name, color) })));
+      if (f.h >= 11) {   // 再掛一面直立招牌
+        const cx = (A.x + B.x) / 2 + f.nx * 1.1, cz = (A.z + B.z) / 2 + f.nz * 1.1, ux = -f.d.dz, uz = f.d.dx, hw = 0.75, y0 = 5, y1 = 11;
+        const sq = new QuadBatch();
+        sq.quad([cx - ux * hw, y0, cz - uz * hw], [cx + ux * hw, y0, cz + uz * hw], [cx + ux * hw, y1, cz + uz * hw], [cx - ux * hw, y1, cz - uz * hw], [1, 1, 1]);
+        scene.add(sq.mesh(new THREE.MeshBasicMaterial({ map: customSignTexture(it.sh.name, color), side: THREE.DoubleSide })));
+      }
+    });
+  }
+}
 function finishCityBatches() {
+  placeCustomShops();
   const wt = [windowTexture(), apartmentTexture(), glassTexture()];
   CITY.walls.forEach((b, i) => scene.add(b.mesh(new THREE.MeshLambertMaterial({ map: wt[i], vertexColors: true }))));
   CITY.shops.forEach((b, i) => scene.add(b.mesh(new THREE.MeshBasicMaterial({ map: shopTexture(i) }))));
@@ -357,6 +421,7 @@ function decorateWall(a, b, l, h) {
   if (Math.abs(ex * d.dx + ez * d.dz) < 0.75) return;          // 要跟馬路平行
   const nx = -ez, nz = ex, c = pos(pc.s, 0);
   if ((c.x - mx) * nx + (c.z - mz) * nz <= 0) return;          // 要面向馬路
+  CITY.faces.push({ a, b, l, ex, ez, nx, nz, h, d });
   const k = Math.floor(hash(++CITY.seed) * SHOP_NAMES.length), o = 0.06;
   const top = Math.min(4.2, h - 0.5);
   CITY.shops[k].quad([a.x + nx * o, 0.15, a.z + nz * o], [b.x + nx * o, 0.15, b.z + nz * o], [b.x + nx * o, top, b.z + nz * o], [a.x + nx * o, top, a.z + nz * o], [1, 1, 1],
