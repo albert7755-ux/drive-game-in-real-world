@@ -156,4 +156,15 @@ except Exception:
 html = html.replace("__SHOP_DATA__", json.dumps(shops, ensure_ascii=False).replace("</", "<\\/"))
 html = html.replace("__BOND_DATA__", json.dumps(bond, ensure_ascii=False).replace("</", "<\\/") if bond else "")
 
+# ---- 共用排行榜：Streamlit Secrets 裡的 Supabase 設定（跟債速配、飛行遊戲同一組）----
+def get_secret(key):
+    try:
+        return str(st.secrets[key]).strip()
+    except Exception:
+        return ""
+
+
+html = html.replace("__SUPABASE_URL__", get_secret("SUPABASE_URL").rstrip("/"))
+html = html.replace("__SUPABASE_ANON_KEY__", get_secret("SUPABASE_ANON_KEY"))
+
 components.html(html, height=900, scrolling=False)
